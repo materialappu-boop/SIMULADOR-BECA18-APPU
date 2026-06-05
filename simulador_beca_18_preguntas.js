@@ -434,3 +434,4 @@ function generateBecaQuestions() {
 
   return q;
 }
+// Sincronización activa con GitHub - simulador APPU
