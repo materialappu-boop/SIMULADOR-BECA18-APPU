@@ -1,0 +1,3047 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador Beca 18 APPU</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800;950&amp;display=swap"
+    rel="stylesheet">
+
+  <!-- KaTeX for rendering LaTeX math formulas -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <!-- Default Exam Questions -->
+  <script src="simulador_beca_18_preguntas.js"></script>
+
+  <style>
+    body {
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .animate-fadeIn {
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .animate-slideIn {
+      animation: slideIn 0.3s ease-out;
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    @keyframes glowPulse {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6);
+      }
+      50% {
+        transform: scale(1.04);
+        box-shadow: 0 0 16px 6px rgba(245, 158, 11, 0.45);
+      }
+    }
+
+    .animate-glowPulse {
+      animation: glowPulse 2.5s infinite ease-in-out;
+    }
+  </style>
+
+  <!-- SDKs Placeholder for platforms -->
+  <script src="/_sdk/data_sdk.js" type="text/javascript" onerror="console.log('Local fallback used')"></script>
+  <script src="/_sdk/resizing_sdk.js" type="text/javascript" onerror="console.log('Local fallback used')"></script>
+  <script src="/_sdk/telemetry_sdk.js" onerror="console.log('Local fallback used')"></script>
+</head>
+
+<body class="min-h-screen w-full bg-slate-50 text-slate-800 flex flex-col">
+
+  <!-- HEADER SECTION -->
+  <header class="sticky top-0 z-40 bg-gradient-to-r from-red-800 via-red-700 to-indigo-950 text-white shadow-xl">
+    <div
+      class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3">
+
+      <!-- BRAND / LOGO -->
+      <div class="flex items-center space-x-3 cursor-pointer select-none"
+        onclick="if(!state.simulationActive) switchTab('inicio')">
+        <div class="bg-white/10 p-2 rounded-xl border border-white/20 shadow-inner">
+          <i data-lucide="graduation-cap" class="w-8 h-8 text-yellow-300"></i>
+        </div>
+        <div class="text-center sm:text-left">
+          <h1 data-template-id="app-title" class="text-lg sm:text-xl font-black tracking-tight uppercase">SIMULADOR DE EXAMEN BECA 18</h1>
+          <p data-template-id="app-subtitle" class="text-xs font-semibold text-slate-200 tracking-wide mt-0.5">Plataforma desarrollada por Colegios y Academia APPU</p>
+        </div>
+      </div>
+
+      <!-- NAV TABS -->
+      <div id="nav-tabs" class="flex items-center space-x-2">
+        <nav class="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
+          <button onclick="switchTab('inicio')" data-tab="inicio"
+            class="tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-white hover:bg-white/10">Inicio</button>
+          <button onclick="switchTab('simulador')" data-tab="simulador"
+            class="tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-white hover:bg-white/10">Simulacro</button>
+          <button onclick="switchTab('banco')" data-tab="banco"
+            class="tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-white hover:bg-white/10">Banco
+            de Ejercicios</button>
+          <button onclick="tryAccessAdmin()" data-tab="admin"
+            class="tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-red-200 hover:bg-white/10 flex items-center space-x-1 border border-red-500/20 bg-red-950/25">
+            <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+            <span>Admin</span>
+          </button>
+        </nav>
+        <button id="logout-btn" onclick="adminLogout()"
+          class="hidden p-2 bg-red-950/50 hover:bg-red-900 text-red-200 hover:text-white rounded-xl transition-all"
+          title="Cerrar Sesión">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- ACTIVE TEST TIMER -->
+      <div id="sim-timer"
+        class="hidden flex items-center space-x-4 bg-red-950/60 px-4 py-2 rounded-full border border-red-500/30 shadow-inner">
+        <div class="flex items-center space-x-2 text-rose-100 font-extrabold text-sm">
+          <i data-lucide="clock" class="w-4 h-4 text-yellow-300 animate-pulse"></i>
+          <span id="timer-display" class="font-mono text-base">00:00</span>
+        </div>
+        <div class="h-4 w-px bg-red-500/30"></div>
+        <button onclick="finishSimulation()"
+          class="bg-yellow-400 hover:bg-yellow-300 text-indigo-950 text-xs font-black px-3.5 py-1.5 rounded-full transition-all shadow-md hover:scale-105 active:scale-95 uppercase tracking-wider">
+          Entregar Examen
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN VIEWPORT -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- INICIO TAB -->
+    <div id="tab-inicio" class="space-y-8 animate-fadeIn">
+
+      <!-- Hero Banner -->
+      <div
+        class="bg-gradient-to-br from-indigo-950 via-slate-900 to-red-950 text-white rounded-3xl p-6 sm:p-8 md:p-12 shadow-2xl relative overflow-hidden border border-indigo-900/40">
+        <div class="absolute top-0 right-0 w-96 h-96 bg-red-600/15 rounded-full blur-3xl -mr-20 -mt-20"></div>
+        <div class="absolute bottom-0 left-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl -ml-20 -mb-20"></div>
+
+        <div class="relative z-10 max-w-3xl space-y-5">
+          <div
+            class="inline-flex items-center bg-red-600 text-white font-extrabold text-[10px] sm:text-xs uppercase tracking-widest px-3.5 py-1.5 rounded-full shadow-lg border border-red-500/30">
+            <span data-template-id="badge-text">Concurso Beca 18 - Admisión 2026</span>
+          </div>
+          <h2 data-template-id="hero-title"
+            class="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-tight">
+            ¡Asegura tu Preselección Nacional de Beca 18!
+          </h2>
+          <p data-template-id="hero-description"
+            class="text-slate-300 text-sm sm:text-base leading-relaxed max-w-2xl font-medium">
+            Mide tus aptitudes con nuestro simulador inteligente. Evaluaciones optimizadas bajo el temario oficial de
+            PRONABEC en Competencia Lectora y Matemática. Obtén diagnósticos automáticos y solucionarios didácticos de
+            inmediato.
+          </p>
+
+          <div class="pt-4 flex flex-wrap gap-4">
+            <button onclick="switchTab('simulador')"
+              class="px-6 py-3.5 bg-red-600 hover:bg-red-500 text-white rounded-xl shadow-lg shadow-red-950/50 transition-all flex items-center space-x-2.5 font-extrabold hover:scale-105 active:scale-95">
+              <i data-lucide="book-open" class="w-5 h-5"></i>
+              <span>Iniciar Simulacro Virtual</span>
+            </button>
+            <button onclick="showModal('cycle-modal')"
+              class="animate-glowPulse px-6 py-3.5 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-indigo-950 rounded-xl transition-all flex items-center space-x-2.5 font-black text-sm border border-yellow-300/40 shadow-lg hover:scale-105 active:scale-95">
+              <i data-lucide="book-marked" class="w-5 h-5"></i>
+              <span>¡ASEGURA TU BECA HOY!</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fast Stats Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div
+          class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-md hover:shadow-lg transition-shadow flex items-center space-x-4">
+          <div class="bg-red-50 text-red-600 p-3.5 rounded-xl border border-red-100">
+            <i data-lucide="file-text" class="w-7 h-7"></i>
+          </div>
+          <div>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Simulacros Disponibles</p>
+            <p id="stat-exams" class="text-xl font-black text-slate-800">Cargando...</p>
+          </div>
+        </div>
+
+        <div
+          class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-md hover:shadow-lg transition-shadow flex items-center space-x-4">
+          <div class="bg-indigo-50 text-indigo-600 p-3.5 rounded-xl border border-indigo-100">
+            <i data-lucide="award" class="w-7 h-7"></i>
+          </div>
+          <div>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Estructura Examen</p>
+            <p class="text-xl font-black text-slate-800">60 Preguntas</p>
+          </div>
+        </div>
+
+        <div
+          class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-md hover:shadow-lg transition-shadow flex items-center space-x-4">
+          <div class="bg-emerald-50 text-emerald-600 p-3.5 rounded-xl border border-emerald-100">
+            <i data-lucide="check-circle" class="w-7 h-7"></i>
+          </div>
+          <div>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Valor de Respuesta</p>
+            <p class="text-xl font-black text-slate-800">2 pts. Correcta / 0 pts. Error</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Rankings Panel -->
+      <div id="ranking-section"
+        class="bg-gradient-to-br from-amber-50 to-orange-50/50 rounded-2xl border border-amber-200/70 p-6 sm:p-8 shadow-md">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="text-3xl">🏆</span>
+          <div>
+            <h3 class="text-xl font-black text-amber-950">Top 5 Mejores Resultados - Simulador APPU</h3>
+            <p class="text-xs text-amber-800/80 font-semibold">Alumnos destacados con mayor puntaje y menor tiempo de
+              resolución.</p>
+          </div>
+        </div>
+        <div id="ranking-list" class="grid grid-cols-1 md:grid-cols-5 gap-4"></div>
+      </div>
+
+      <!-- Educational Info Box -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-3">
+        <h3 data-template-id="info-title" class="text-xl font-black text-slate-900 flex items-center gap-2">
+          <i data-lucide="info" class="w-5 h-5 text-indigo-600"></i>
+          Sobre la Evaluación de Preselección Beca 18
+        </h3>
+        <p data-template-id="info-text" class="text-sm text-slate-600 leading-relaxed font-medium">
+          El examen consta de un total de 60 preguntas de opción múltiple. Incluye 30 ejercicios de <strong>Competencia
+            Matemática</strong> (cubriendo álgebra, aritmética, geometría, trigonometría, estadística y probabilidades)
+          y 30 ejercicios de <strong>Competencia Lectora</strong> (incluyendo análisis de textos científicos,
+          filosóficos, analogías, etc.). No se aplican puntos en contra por respuestas incorrectas. ¡Prueba tu rapidez
+          para dominar el tiempo límite!
+        </p>
+      </div>
+    </div>
+
+    <!-- SIMULADOR SETUP TAB -->
+    <div id="tab-simulador" class="hidden max-w-3xl mx-auto space-y-6 animate-fadeIn">
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-md space-y-6">
+        <div class="text-center space-y-2">
+          <div
+            class="mx-auto w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center border border-red-100">
+            <i data-lucide="timer" class="w-8 h-8"></i>
+          </div>
+          <h3 data-template-id="sim-title" class="text-2xl font-black text-slate-900">Configura tu Evaluación</h3>
+          <p data-template-id="sim-subtitle" class="text-sm text-slate-500 max-w-md mx-auto">Selecciona una de las
+            pruebas diseñadas por nuestra plana docente y asume el reto oficial.</p>
+        </div>
+
+        <div id="sim-empty-warning"
+          class="hidden bg-amber-50 border border-amber-200 text-amber-900 p-5 rounded-xl text-sm flex items-start space-x-3">
+          <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600 shrink-0 mt-0.5"></i>
+          <div>
+            <p class="font-bold">Información de carga</p>
+            <p class="mt-1" id="sim-warning-desc">Cargando datos del sistema...</p>
+          </div>
+        </div>
+
+        <div id="sim-config" class="space-y-6">
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider" for="sel-exam">Seleccionar
+              Examen</label>
+            <select id="sel-exam"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all"></select>
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider" for="sel-time">Tiempo de
+              duración sugerido</label>
+            <select id="sel-time"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all">
+              <option value="2400">Corto para práctica rápida (40 Minutos)</option>
+              <option value="3600">Simulación estándar acelerada (60 Minutos)</option>
+              <option value="5400">Tiempo de práctica intermedio (90 Minutos)</option>
+              <option value="7200" selected>Simulacro Oficial Completo (120 Minutos - Tiempo Oficial Pronabec)</option>
+            </select>
+          </div>
+
+          <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200/80 text-xs text-slate-600 space-y-2">
+            <p class="font-extrabold text-slate-800 text-sm flex items-center gap-1.5">
+              <i data-lucide="award" class="w-4 h-4 text-red-600"></i> Reglas del Examen:
+            </p>
+            <ul class="list-disc pl-5 space-y-1.5 font-medium leading-relaxed">
+              <li>El examen consta de <strong>60 preguntas de nivel Beca 18</strong>.</li>
+              <li>Por cada respuesta correcta sumas <strong>+2 Puntos</strong>.</li>
+              <li><strong>No hay puntaje negativo</strong> por marcar incorrectamente ni por dejar en blanco.</li>
+              <li>Una vez iniciado, el cronómetro no se pausará incluso si cierras la pestaña.</li>
+            </ul>
+          </div>
+
+          <button onclick="startSimulation()"
+            class="w-full py-4 bg-gradient-to-r from-red-700 to-red-600 text-white rounded-xl shadow-lg shadow-red-700/20 font-black text-base flex items-center justify-center space-x-2.5 hover:scale-[1.01] active:scale-95 transition-all">
+            <span>Comenzar Evaluación Virtual</span>
+            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIMULATION ACTIVE VIEW -->
+    <div id="tab-sim-active" class="hidden space-y-6 animate-fadeIn">
+
+      <!-- Top Progress Indicator -->
+      <div
+        class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between flex-wrap gap-4">
+        <div class="flex items-center space-x-3">
+          <span class="text-xs font-bold text-slate-500">PROGRESO DEL SIMULACRO</span>
+          <div class="h-3 w-40 sm:w-60 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+            <div id="sim-progress-bar" class="h-full bg-red-600 transition-all duration-300" style="width: 0%"></div>
+          </div>
+          <span id="sim-progress-txt" class="text-xs font-extrabold text-red-700">0/60</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-slate-400">Usuario Activo:</span>
+          <span id="sim-user-display"
+            class="bg-indigo-50 border border-indigo-200 text-indigo-900 font-extrabold px-3 py-1 rounded-full text-xs"></span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+
+        <!-- Sidebar: Navigation Grid -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-md space-y-4 lg:col-span-1">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h4 class="font-black text-slate-900 text-sm">Navegación de Preguntas</h4>
+            <span class="text-xs font-bold text-slate-400">Clic para ir</span>
+          </div>
+
+          <!-- Grid container -->
+          <div id="nav-grid" class="grid grid-cols-5 gap-2 max-h-[280px] overflow-y-auto pr-1"></div>
+
+          <div class="h-px bg-slate-100"></div>
+
+          <!-- Legends -->
+          <div class="space-y-2 text-[11px] text-slate-500 font-bold">
+            <div class="flex items-center space-x-2">
+              <div class="w-3.5 h-3.5 bg-slate-50 border border-slate-300 rounded"></div>
+              <span>Sin responder</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <div class="w-3.5 h-3.5 bg-red-600 rounded"></div>
+              <span>Resuelta</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <div class="w-3.5 h-3.5 bg-yellow-400 rounded"></div>
+              <span>Marcada para revisar</span>
+            </div>
+          </div>
+
+          <div class="h-px bg-slate-100"></div>
+
+          <!-- Helper Tools Section -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
+              <h4 class="font-black text-slate-900 text-xs flex items-center gap-1"><i data-lucide="wrench" class="w-3.5 h-3.5 text-red-600"></i> Herramientas de Apoyo</h4>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button type="button" onclick="toggleWidget('calculator-widget')" class="py-2 px-2.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 text-indigo-950 font-black text-[10px] rounded-xl flex items-center justify-center gap-1.5 transition-colors">
+                <i data-lucide="calculator" class="w-3.5 h-3.5 text-indigo-700"></i>
+                <span>Calculadora</span>
+              </button>
+              <button type="button" onclick="toggleWidget('scratchpad-widget')" class="py-2 px-2.5 bg-red-50 hover:bg-red-100 border border-red-100 text-red-950 font-black text-[10px] rounded-xl flex items-center justify-center gap-1.5 transition-colors">
+                <i data-lucide="edit-3" class="w-3.5 h-3.5 text-red-700"></i>
+                <span>Pizarra</span>
+              </button>
+            </div>
+          </div>
+
+          <button onclick="finishSimulation()"
+            class="w-full bg-slate-900 hover:bg-indigo-950 text-white text-xs font-black py-3 rounded-xl transition-all uppercase tracking-wider">
+            Terminar y Entregar
+          </button>
+        </div>
+
+        <!-- Content: Question Card -->
+        <div
+          class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-md space-y-6 lg:col-span-3 min-h-[400px] flex flex-col justify-between">
+
+          <div class="space-y-6">
+            <!-- Card Header -->
+            <div class="flex items-center justify-between border-b border-slate-150 pb-4 flex-wrap gap-2">
+              <div class="flex items-center space-x-3">
+                <span id="q-number"
+                  class="bg-red-700 text-white font-black text-xs px-3.5 py-1.5 rounded-lg shadow-sm"></span>
+                <span id="q-category" class="text-xs font-extrabold text-slate-400 uppercase tracking-widest"></span>
+              </div>
+              <button id="flag-btn" onclick="toggleFlag()"
+                class="text-xs font-bold px-3 py-1.5 rounded-lg border transition-all flex items-center space-x-1.5 bg-white border-slate-200 text-slate-500 hover:bg-slate-50">
+                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                <span>Marcar para revisar</span>
+              </button>
+            </div>
+
+            <!-- Question Enunciado -->
+            <div class="space-y-4">
+              <p id="q-text"
+                class="text-slate-950 font-bold text-lg sm:text-xl leading-relaxed whitespace-pre-wrap select-text"></p>
+              <img id="q-img" src="" alt=""
+                class="w-full max-w-2xl mx-auto rounded-xl border border-slate-200 hidden shadow-sm max-h-80 object-contain">
+            </div>
+
+            <!-- Options List -->
+            <div id="q-options" class="grid grid-cols-1 gap-3.5 pt-2"></div>
+          </div>
+
+          <!-- Footer Navigation Controls -->
+          <div class="flex justify-between items-center border-t border-slate-150 pt-6 mt-6">
+            <button onclick="simPrev()" id="sim-prev-btn"
+              class="px-5 py-3 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-xl flex items-center space-x-2 hover:bg-slate-50 transition-all active:scale-95">
+              <i data-lucide="chevron-left" class="w-4 h-4"></i>
+              <span>Pregunta Anterior</span>
+            </button>
+            <button onclick="simNext()" id="sim-next-btn"
+              class="px-5 py-3 bg-red-700 text-white text-sm font-extrabold rounded-xl flex items-center space-x-2 hover:bg-red-600 transition-all active:scale-95">
+              <span>Siguiente Pregunta</span>
+              <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS DISPLAY TAB -->
+    <div id="tab-results" class="hidden max-w-4xl mx-auto space-y-8 animate-fadeIn">
+      <div class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xl space-y-6">
+        <div class="text-center space-y-2">
+          <span
+            class="bg-emerald-50 text-emerald-800 font-extrabold text-xs uppercase tracking-widest px-4 py-1.5 rounded-full border border-emerald-200">Examen
+            Concluido con Éxito</span>
+          <h3 data-template-id="results-heading" class="text-3xl font-black text-slate-900">Tu Reporte de Rendimiento
+          </h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+          <!-- Scorebox -->
+          <div
+            class="bg-slate-50 rounded-2xl p-6 text-center border border-slate-200 flex flex-col justify-center items-center">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Puntaje Total
+              Alcanzado</span>
+            <span id="res-score" class="text-5xl font-black text-red-700 block"></span>
+            <span id="res-max" class="text-xs font-semibold text-slate-400 mt-2 block"></span>
+          </div>
+
+          <!-- Analytics detail -->
+          <div class="space-y-3.5 bg-slate-50 rounded-2xl p-6 border border-slate-200 flex flex-col justify-center">
+            <div class="flex justify-between text-sm font-bold">
+              <span class="text-emerald-600 flex items-center gap-1"><i data-lucide="check" class="w-4 h-4"></i>
+                Correctas</span>
+              <span id="res-correct" class="font-black text-slate-950"></span>
+            </div>
+            <div class="flex justify-between text-sm font-bold">
+              <span class="text-red-500 flex items-center gap-1"><i data-lucide="x" class="w-4 h-4"></i>
+                Incorrectas</span>
+              <span id="res-incorrect" class="font-black text-slate-950"></span>
+            </div>
+            <div class="flex justify-between text-sm font-bold">
+              <span class="text-slate-500 flex items-center gap-1"><i data-lucide="help-circle" class="w-4 h-4"></i> Sin
+                Responder</span>
+              <span id="res-unanswered" class="font-black text-slate-950"></span>
+            </div>
+          </div>
+
+          <!-- Diagnosis Box -->
+          <div
+            class="bg-gradient-to-br from-indigo-50 to-red-50/50 rounded-2xl p-6 border border-indigo-100 flex flex-col justify-center text-center">
+            <p class="text-xs font-bold text-indigo-900 uppercase tracking-widest mb-1.5">Diagnóstico Pedagógico APPU
+            </p>
+            <h4 id="res-diagnosis" class="font-black text-slate-900 text-lg"></h4>
+            <p id="res-advice" class="text-xs text-slate-600 mt-2 leading-relaxed font-medium"></p>
+          </div>
+
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-center gap-3.5 pt-2 border-t border-slate-100 mt-6">
+          <button onclick="showLeadForm()"
+            class="bg-red-700 hover:bg-red-600 text-white font-extrabold px-6 py-3.5 rounded-xl transition-all flex items-center justify-center space-x-2 shadow-md">
+            <i data-lucide="award" class="w-4 h-4"></i>
+            <span>Acceder a Resultados Detallados y Solucionario</span>
+          </button>
+          <button onclick="toggleSimpleResults()" id="btn-simple-results"
+            class="bg-indigo-900 hover:bg-indigo-850 text-white font-bold px-6 py-3.5 rounded-xl transition-all flex items-center justify-center space-x-2 shadow-md">
+            <i data-lucide="eye" class="w-4 h-4"></i>
+            <span>Ver Resultados</span>
+          </button>
+          <button onclick="repeatSimulation()"
+            class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-6 py-3.5 rounded-xl transition-all flex items-center justify-center space-x-2">
+            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+            <span>Repetir Examen</span>
+          </button>
+          <button onclick="toggleSolutions()" id="btn-solutions"
+            class="hidden bg-indigo-900 hover:bg-indigo-850 text-white font-bold px-6 py-3.5 rounded-xl transition-all flex items-center justify-center space-x-2">
+            <i data-lucide="eye" class="w-4 h-4"></i>
+            <span>Ver Solucionarios</span>
+          </button>
+          <button onclick="exitSimulation()"
+            class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-6 py-3.5 rounded-xl transition-all">
+            Volver al Menú
+          </button>
+        </div>
+      </div>
+
+      <!-- Solutions List (Hidden till lead capture form completed) -->
+      <div id="solutions-list" class="hidden space-y-6 animate-fadeIn"></div>
+    </div>
+
+    <!-- BANCO DE EJERCICIOS TAB -->
+    <div id="tab-banco" class="hidden space-y-6 animate-fadeIn">
+      <div
+        class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          <h3 data-template-id="banco-title" class="font-black text-slate-900 text-xl">Entrenamiento Libre</h3>
+          <p data-template-id="banco-subtitle" class="text-xs text-slate-500 font-medium mt-0.5">Practica libremente
+            pregunta por pregunta, analiza los procedimientos paso a paso y domina el temario oficial.</p>
+        </div>
+        <div class="flex flex-wrap gap-2" id="banco-filters"></div>
+      </div>
+
+      <!-- Search & Filter Controls -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col sm:flex-row gap-3">
+        <div class="flex-grow">
+          <input type="text" id="banco-search-input" oninput="renderBanco()" placeholder="Buscar por palabra clave en el enunciado..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-red-500 font-semibold transition-all">
+        </div>
+        <div class="sm:w-64">
+          <select id="banco-exam-select" onchange="renderBanco()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-red-500 transition-all">
+            <option value="all">Todos los Simulacros</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="banco-list" class="grid grid-cols-1 gap-6"></div>
+    </div>
+
+    <!-- ADMIN TAB -->
+    <div id="tab-admin" class="hidden space-y-8 animate-fadeIn">
+
+      <!-- Header Admin info -->
+      <div
+        class="bg-slate-900 text-white rounded-2xl p-5 border border-slate-800 flex items-center justify-between flex-wrap gap-4">
+        <div class="flex items-center space-x-3">
+          <div class="p-2.5 bg-yellow-400 rounded-xl text-slate-950 shadow-md">
+            <i data-lucide="unlock" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h3 class="font-black text-sm sm:text-base">Módulo del Administrador APPU</h3>
+            <p class="text-xs text-slate-400">Gestiona los simulacros virtuales y bancos de preguntas cargados.</p>
+          </div>
+        </div>
+        <button onclick="adminLogout()"
+          class="bg-red-600/10 hover:bg-red-600/20 text-red-400 hover:text-white px-4 py-2 rounded-xl text-xs font-extrabold border border-red-500/20 transition-all flex items-center space-x-1">
+          <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+          <span>Cerrar Panel</span>
+        </button>
+      </div>
+
+      <!-- Exam Management Block -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
+        <div class="border-b border-slate-100 pb-4">
+          <h3 class="font-black text-lg text-slate-900">📋 Gestión de Simulacros Oficiales</h3>
+          <p class="text-slate-500 text-xs mt-0.5">Crea contenedores de exámenes. Para que un examen esté completo y sea
+            elegible por el estudiante, debe tener exactamente 60 preguntas.</p>
+        </div>
+
+        <div class="flex flex-wrap gap-3 items-end">
+          <div class="space-y-1.5 flex-grow">
+            <label class="block text-xs font-extrabold text-slate-500 uppercase tracking-widest"
+              for="f-exam-name">Nombre del Examen</label>
+            <input type="text" id="f-exam-name" placeholder="Ej: Simulacro Nacional Beca 18 APPU - 2026 II"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-red-500 focus:bg-white font-semibold transition-all">
+          </div>
+          <button type="button" onclick="createExam()"
+            class="bg-red-700 hover:bg-red-600 text-white font-black text-sm px-6 py-3.5 rounded-xl transition-all flex items-center space-x-2 shadow-md">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Crear Examen</span>
+          </button>
+        </div>
+
+        <div id="exam-list" class="space-y-3"></div>
+
+        <div class="flex flex-wrap gap-2.5 pt-3 border-t border-slate-100 justify-end">
+          <button type="button" onclick="exportExams()" class="bg-indigo-950 hover:bg-slate-800 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl transition-all flex items-center space-x-1.5 shadow">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+            <span>Exportar Simulacros (JSON)</span>
+          </button>
+          <button type="button" onclick="document.getElementById('import-exams-file').click()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs px-4 py-2.5 rounded-xl transition-all border border-slate-200 flex items-center space-x-1.5 shadow-sm">
+            <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+            <span>Importar Simulacros (JSON)</span>
+          </button>
+          <input type="file" id="import-exams-file" accept=".json" class="hidden" onchange="importExams(this)">
+        </div>
+      </div>
+
+      <!-- Create / Edit Question Block -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-4 flex-wrap gap-2">
+          <div>
+            <h3 id="admin-form-title" class="font-black text-lg text-slate-900">➕ Agregar Pregunta con LaTeX</h3>
+            <p class="text-slate-500 text-xs mt-0.5">Usa sintaxis LaTeX para expresiones matemáticas envolviendo el
+              código en $ o $$. Ejemplo: $\frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$.</p>
+          </div>
+          <button id="btn-discard-edit" onclick="resetAdminForm()"
+            class="hidden bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs px-3 py-1.5 rounded-lg border">Descartar
+            Cambios</button>
+        </div>
+
+        <form id="admin-form" onsubmit="saveQuestion(event)" class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="space-y-1.5">
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider" for="f-exam-assign">Examen
+                Asignado</label>
+              <select id="f-exam-assign"
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all"></select>
+            </div>
+            <div class="space-y-1.5">
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider"
+                for="f-category">Competencia</label>
+              <select id="f-category"
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all">
+                <option value="Competencia Matemática">Competencia Matemática</option>
+                <option value="Competencia Lectora">Competencia Lectora</option>
+              </select>
+            </div>
+            <div class="space-y-1.5">
+              <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Alternativa Correcta
+                (Clave)</label>
+              <div class="flex gap-2" id="key-buttons"></div>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider" for="f-question">Enunciado de
+              la Pregunta (Soporta $...$)</label>
+            <div
+              class="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-red-500 transition-all">
+              <div class="flex flex-wrap gap-1 p-2 border-b border-slate-200 bg-white select-none">
+                <button type="button" onclick="insertMathChar('^2')"
+                  class="px-2 py-1 rounded text-xs font-extrabold bg-slate-100 hover:bg-slate-200 border border-slate-200"
+                  title="Exponente">$x^2$</button>
+                <button type="button" onclick="insertMathChar('\\frac{a}{b}')"
+                  class="px-2 py-1 rounded text-xs font-extrabold bg-slate-100 hover:bg-slate-200 border border-slate-200"
+                  title="Fracción">$\frac{a}{b}$</button>
+                <button type="button" onclick="insertMathChar('\\sqrt{x}')"
+                  class="px-2 py-1 rounded text-xs font-extrabold bg-slate-100 hover:bg-slate-200 border border-slate-200"
+                  title="Raíz">$\sqrt{x}$</button>
+                <button type="button" onclick="insertMathChar('\\pi')"
+                  class="px-2 py-1 rounded text-xs font-extrabold bg-slate-100 hover:bg-slate-200 border border-slate-200"
+                  title="Pi">$\pi$</button>
+                <button type="button" onclick="insertMathChar('\\pm')"
+                  class="px-2 py-1 rounded text-xs font-extrabold bg-slate-100 hover:bg-slate-200 border border-slate-200"
+                  title="Más Menos">$\pm$</button>
+                <button type="button" onclick="insertMathChar('\\leq')"
+                  class="px-2 py-1 rounded text-xs font-extrabold bg-slate-100 hover:bg-slate-200 border border-slate-200"
+                  title="Menor o Igual">$\leq$</button>
+                <button type="button" onclick="insertMathChar('\\geq')"
+                  class="px-2 py-1 rounded text-xs font-extrabold bg-slate-100 hover:bg-slate-200 border border-slate-200"
+                  title="Mayor o Igual">$\geq$</button>
+                <button type="button" onclick="insertMathChar('\\neq')"
+                  class="px-2 py-1 rounded text-xs font-extrabold bg-slate-100 hover:bg-slate-200 border border-slate-200"
+                  title="Diferente">$\neq$</button>
+                <button type="button" onclick="insertMathChar('\\sum_{n=1}^{k}')"
+                  class="px-2 py-1 rounded text-xs font-extrabold bg-slate-100 hover:bg-slate-200 border border-slate-200"
+                  title="Sumatoria">$\sum$</button>
+              </div>
+              <textarea id="f-question" rows="4"
+                placeholder="Ej: Determine el conjunto de valores de $x$ para el cual la función $f(x) = \sqrt{x - 3}$ está definida."
+                class="w-full bg-slate-50 border-0 px-4 py-3 text-sm outline-none placeholder-slate-400 font-semibold resize-y"></textarea>
+            </div>
+          </div>
+
+          <!-- IMAGE DETECT DUO -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Imagen del Enunciado
+              (Opcional)</label>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="flex items-center justify-center w-full">
+                <label
+                  class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-all">
+                  <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                    <i data-lucide="upload-cloud" class="w-8 h-8 text-slate-400 mb-2"></i>
+                    <p class="text-xs text-slate-500 font-black">Subir imagen local (Base64)</p>
+                    <p class="text-[9px] text-slate-400 mt-1 font-semibold">Carga directa desde tu dispositivo</p>
+                  </div>
+                  <input type="file" id="f-question-file" accept="image/*" class="hidden"
+                    onchange="handleFileAsBase64(this, 'f-question-img')">
+                </label>
+              </div>
+              <div class="space-y-2">
+                <p class="text-[11px] text-slate-400 font-extrabold uppercase">O pegar URL externa existente:</p>
+                <input type="text" id="f-question-img" placeholder="https://ejemplo.com/grafico.png"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-red-500 focus:bg-white font-semibold transition-all">
+                <button type="button" onclick="clearImageField('f-question-img', 'f-question-file')"
+                  class="text-xs text-red-600 font-bold hover:underline flex items-center gap-1">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Eliminar imagen del enunciado
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-3.5">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Alternativas de Respuesta
+              (A-E)</label>
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4" id="options-inputs"></div>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider" for="f-solution">Explicación
+              Paso a Paso de la Solución (Soporta $...$)</label>
+            <textarea id="f-solution" rows="4"
+              placeholder="Redacta la explicación del ejercicio usando LaTeX si es necesario para facilitar el aprendizaje..."
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-red-500 focus:bg-white font-medium transition-all"></textarea>
+          </div>
+
+          <!-- IMAGE SOLUTION DUO -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Imagen de la Solución
+              (Opcional)</label>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="flex items-center justify-center w-full">
+                <label
+                  class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-all">
+                  <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                    <i data-lucide="upload-cloud" class="w-8 h-8 text-slate-400 mb-2"></i>
+                    <p class="text-xs text-slate-500 font-black">Subir imagen local (Base64)</p>
+                    <p class="text-[9px] text-slate-400 mt-1 font-semibold">Carga directa desde tu dispositivo</p>
+                  </div>
+                  <input type="file" id="f-solution-file" accept="image/*" class="hidden"
+                    onchange="handleFileAsBase64(this, 'f-solution-img')">
+                </label>
+              </div>
+              <div class="space-y-2">
+                <p class="text-[11px] text-slate-400 font-extrabold uppercase">O pegar URL externa existente:</p>
+                <input type="text" id="f-solution-img" placeholder="https://ejemplo.com/solucion.png"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-red-500 focus:bg-white font-semibold transition-all">
+                <button type="button" onclick="clearImageField('f-solution-img', 'f-solution-file')"
+                  class="text-xs text-red-600 font-bold hover:underline flex items-center gap-1">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Eliminar imagen de la solución
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preview Frame -->
+          <div class="border-t border-slate-200 pt-6">
+            <h4 class="text-xs font-black text-slate-900 uppercase tracking-widest mb-4 flex items-center gap-1.5">
+              <i data-lucide="eye" class="w-4 h-4 text-red-600"></i> Vista Previa en Tiempo Real (Renderizada)
+            </h4>
+            <div id="preview-panel"
+              class="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl border border-slate-200 p-6 shadow-inner space-y-4">
+              <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                <div class="flex items-center space-x-3">
+                  <span id="prev-q-number"
+                    class="bg-red-700 text-white font-black text-xs px-3.5 py-1.5 rounded-lg shadow-sm">Q. 1</span>
+                  <span id="prev-category"
+                    class="text-xs font-bold text-slate-400 uppercase tracking-widest">Categoría</span>
+                </div>
+              </div>
+              <div class="space-y-4">
+                <p id="prev-q-text"
+                  class="text-slate-950 font-bold text-sm leading-relaxed whitespace-pre-wrap select-text"></p>
+                <img id="prev-q-img" class="max-w-md mx-auto rounded-xl border border-slate-300 hidden shadow-md">
+              </div>
+              <div id="prev-q-options" class="grid grid-cols-1 gap-2.5 pt-2"></div>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-4 pt-2">
+            <button type="submit"
+              class="px-8 py-3.5 bg-red-700 hover:bg-red-600 text-white rounded-xl shadow-md transition-all flex items-center space-x-2 font-black">
+              <i data-lucide="plus" class="w-5 h-5"></i>
+              <span>Guardar Pregunta</span>
+            </button>
+            <button type="button" onclick="resetAdminForm()"
+              class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-6 py-3.5 rounded-xl transition-all border border-slate-200">
+              Limpiar Formulario
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Admin Question list view -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-4">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-4 flex-wrap gap-4">
+          <div>
+            <h3 class="font-black text-lg text-slate-900">Listado de Preguntas Registradas</h3>
+            <p class="text-slate-500 text-xs mt-0.5">Filtra las preguntas por simulacro para modificarlas o eliminarlas.
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <select id="admin-filter-exam" onchange="renderAdminList()"
+              class="bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2 text-xs font-extrabold outline-none focus:ring-2 focus:ring-red-500"></select>
+            <button onclick="resetToDefaults()"
+              class="bg-red-50 text-red-700 hover:bg-red-100 font-black text-xs px-4 py-2 rounded-lg border border-red-100 flex items-center space-x-1.5 transition-all">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+              <span>Restablecer Todo</span>
+            </button>
+          </div>
+        </div>
+        <div id="admin-list" class="space-y-2 max-h-[500px] overflow-y-auto pr-2"></div>
+      </div>
+
+      <!-- Admin Leads database dashboard card -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-4 flex-wrap gap-4">
+          <div>
+            <h3 class="font-black text-lg text-slate-900">🎓 Estudiantes Registrados (Leads)</h3>
+            <p class="text-slate-500 text-xs mt-0.5">Visualiza, busca y exporta los datos registrados por los estudiantes al finalizar sus simulacros.</p>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button type="button" onclick="exportLeadsToCSV()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs px-4 py-2 rounded-lg transition-all flex items-center space-x-1.5 shadow">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i>
+              <span>Exportar a Excel (CSV)</span>
+            </button>
+            <button type="button" onclick="clearLeadsDatabase()" class="bg-red-50 text-red-700 hover:bg-red-100 font-black text-xs px-4 py-2 rounded-lg border border-red-100 flex items-center space-x-1.5 transition-all">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              <span>Limpiar Historial</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="flex flex-col sm:flex-row gap-3">
+          <div class="flex-grow">
+            <input type="text" id="leads-search-input" oninput="renderLeadsTable()" placeholder="Buscar por nombre, whatsapp o distrito..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs outline-none focus:ring-2 focus:ring-red-500 font-semibold transition-all">
+          </div>
+          <div class="sm:w-48">
+            <select id="leads-filter-exam" onchange="renderLeadsTable()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-red-500 transition-all">
+              <option value="all">Todos los Exámenes</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Leads Table -->
+        <div class="overflow-x-auto border border-slate-150 rounded-xl">
+          <table class="min-w-full divide-y divide-slate-150 text-left text-xs">
+            <thead class="bg-slate-50 font-black text-slate-700 uppercase tracking-wider">
+              <tr>
+                <th class="px-4 py-3">Nombre</th>
+                <th class="px-4 py-3">WhatsApp</th>
+                <th class="px-4 py-3">Correo</th>
+                <th class="px-4 py-3">Distrito</th>
+                <th class="px-4 py-3">Edad</th>
+                <th class="px-4 py-3">Simulacro</th>
+                <th class="px-4 py-3 text-center">Puntaje</th>
+                <th class="px-4 py-3">Fecha</th>
+              </tr>
+            </thead>
+            <tbody id="leads-table-body" class="divide-y divide-slate-100 bg-white font-medium text-slate-800">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+        
+        <div id="leads-empty-msg" class="hidden text-center py-8 text-slate-400 text-sm italic">
+          No hay estudiantes registrados que coincidan con la búsqueda.
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-slate-900 text-slate-400 border-t border-slate-800 py-10 mt-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
+      <div class="flex items-center space-x-2 select-none">
+        <i data-lucide="graduation-cap" class="w-6 h-6 text-red-600"></i>
+        <span data-template-id="footer-brand" class="text-xs font-black text-white uppercase tracking-wider">Colegios y
+          Academia APPU</span>
+      </div>
+      <!-- Social Media Icons -->
+      <div class="flex items-center space-x-4">
+        <a href="https://www.facebook.com/colegiosyacademiaappu/" target="_blank" rel="noopener noreferrer" 
+          class="p-2 bg-slate-800 hover:bg-red-600 hover:text-white rounded-lg transition-all text-slate-400 shadow-inner"
+          title="Facebook">
+          <i data-lucide="facebook" class="w-4 h-4"></i>
+        </a>
+        <a href="https://www.instagram.com/colegiosyacademiaappu/" target="_blank" rel="noopener noreferrer" 
+          class="p-2 bg-slate-800 hover:bg-red-600 hover:text-white rounded-lg transition-all text-slate-400 shadow-inner"
+          title="Instagram">
+          <i data-lucide="instagram" class="w-4 h-4"></i>
+        </a>
+        <a href="https://www.tiktok.com/@colegiosyacademiaappu" target="_blank" rel="noopener noreferrer" 
+          class="p-2 bg-slate-800 hover:bg-red-600 hover:text-white rounded-lg transition-all text-slate-400 shadow-inner"
+          title="TikTok">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.02 1.59 4.23.99 1.18 2.37 1.93 3.85 2.18.01 1.25.01 2.5.01 3.75-.15-.02-.31-.03-.46-.07-1.39-.32-2.62-1.12-3.48-2.24-.04.09-.08.19-.13.27v7.54c-.1 2.66-1.57 5.16-3.99 6.27-2.32 1.05-5.16.79-7.23-.68-2.21-1.57-3.14-4.52-2.18-7.05.81-2.14 2.87-3.66 5.16-3.86.03 1.26.01 2.51.02 3.77-.07.01-.15.01-.22.03-1.19.22-2.19 1.14-2.43 2.33-.3 1.48.51 3.05 1.93 3.55 1.41.51 3.09-.12 3.74-1.46.22-.44.29-.93.28-1.42.02-3.52.01-7.05.02-10.57.01-.15.02-.3.07-.45-.04-.08-.07-.15-.12-.22z"/>
+          </svg>
+        </a>
+        <a href="https://linktr.ee/colegiosyacademiaappu" target="_blank" rel="noopener noreferrer" 
+          class="p-2 bg-slate-800 hover:bg-red-600 hover:text-white rounded-lg transition-all text-slate-400 shadow-inner"
+          title="Web / Linktree">
+          <i data-lucide="globe" class="w-4 h-4"></i>
+        </a>
+      </div>
+      <p data-template-id="footer-copy" class="text-xs text-center md:text-right font-medium text-slate-500">
+        © 2026 Academia APPU. Comprometidos con el desarrollo educativo de los talentos peruanos para Beca 18.
+      </p>
+    </div>
+  </footer>
+
+  <!-- MODALS -->
+
+  <!-- ADMIN PASS MODAL -->
+  <div id="login-modal"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6 border border-slate-100">
+      <div class="text-center space-y-2">
+        <div
+          class="mx-auto w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center border border-red-100 shadow-inner">
+          <i data-lucide="lock" class="w-5 h-5"></i>
+        </div>
+        <h4 class="text-lg font-black text-slate-900">Credenciales del Administrador</h4>
+        <p class="text-slate-500 text-xs">Ingresa la clave exclusiva para la edición de simulacros.</p>
+      </div>
+      <form onsubmit="handleLogin(event)" class="space-y-4">
+        <div class="space-y-2">
+          <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider" for="admin-pass">Contraseña
+            del Sistema</label>
+          <input type="password" id="admin-pass" placeholder="Ingresa clave"
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all"
+            required>
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="hideModal('login-modal')"
+            class="flex-grow bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm py-3 rounded-xl transition-all">Cerrar</button>
+          <button type="submit"
+            class="flex-grow bg-red-700 hover:bg-red-600 text-white font-black text-sm py-3 rounded-xl transition-all shadow-md">Acceder</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- NICKNAME CHOOSE MODAL -->
+  <div id="nickname-modal"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6 border border-slate-100">
+      <div class="text-center space-y-2">
+        <div
+          class="mx-auto w-14 h-14 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center border border-indigo-100 shadow-inner">
+          <i data-lucide="user" class="w-7 h-7"></i>
+        </div>
+        <h4 class="text-xl font-black text-slate-900">Antes de iniciar</h4>
+        <p class="text-sm text-slate-500">¿Cómo deseas aparecer en el Ranking de Alumnos de la Academia APPU?</p>
+      </div>
+      <form onsubmit="submitNickname(event)" class="space-y-4">
+        <div class="space-y-2">
+          <input type="text" id="nickname-input" maxlength="20" placeholder="Escribe tu Nombre / Apodo"
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white text-center text-slate-900 uppercase transition-all"
+            required autofocus>
+          <p class="text-[10px] text-slate-400 font-bold text-center">Máximo 20 caracteres. Ej: PEDRO_ATE, BECARIA_APPU
+          </p>
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="hideModal('nickname-modal')"
+            class="flex-grow bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm py-3.5 rounded-xl transition-all">Cancelar</button>
+          <button type="submit"
+            class="flex-grow bg-red-700 hover:bg-red-600 text-white font-black text-sm py-3.5 rounded-xl transition-all shadow-md">Iniciar
+            Examen Ahora</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CYCLE DETAILED INFO MODAL -->
+  <div id="cycle-modal"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
+    <div class="relative bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-6 border border-slate-100">
+      <!-- Close button top-right -->
+      <button type="button" onclick="hideModal('cycle-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors" title="Cerrar ventana">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+      <div class="text-center space-y-2">
+        <div
+          class="mx-auto w-14 h-14 bg-red-50 text-red-600 rounded-full flex items-center justify-center border border-red-100 shadow-inner">
+          <i data-lucide="graduation-cap" class="w-7 h-7"></i>
+        </div>
+        <h4 data-template-id="cycle-title" class="text-xl font-black text-slate-900">Ciclo Preparación Exclusivo Beca 18
+          APPU</h4>
+        <p class="text-red-600 font-black text-xs tracking-widest uppercase">Colegios y Academia APPU</p>
+      </div>
+      <div class="space-y-4 text-sm text-slate-600 leading-relaxed font-medium">
+        <p>¡Asegura una de las miles de vacantes nacionales del concurso de <strong>Beca 18</strong> con nuestro método
+          de alto rendimiento académico!</p>
+        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-150 space-y-2.5">
+          <p class="font-extrabold text-xs text-slate-800 uppercase tracking-wider">Beneficios del Ciclo:</p>
+          <ul class="list-disc pl-5 space-y-1.5 text-xs text-slate-600">
+            <li><strong>Docentes expertos en el temario PRONABEC</strong> de Aptitud Matemática y Lectura Crítica.</li>
+            <li><strong>Simulacros continuos todos los domingos</strong> con reporte de resultados inmediato.</li>
+            <li><strong>Biblioteca virtual y física</strong> con solucionarios y exámenes anteriores.</li>
+            <li><strong>Asesoría y acompañamiento psicológico</strong> para el manejo de la ansiedad y el estrés.</li>
+          </ul>
+        </div>
+        <div class="text-xs text-center font-extrabold bg-red-50 border border-red-100/60 p-3 rounded-xl text-red-950">
+          📞 Para informes e inscripciones, escríbenos directamente o visítanos en nuestras sedes.
+        </div>
+      </div>
+      <div class="flex flex-col sm:flex-row gap-3 pt-2">
+        <a href="https://wa.me/933019983" target="_blank"
+          class="flex-grow py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs text-center flex items-center justify-center space-x-1.5 transition-all shadow-md hover:scale-[1.02] active:scale-95">
+          <i data-lucide="message-circle" class="w-4 h-4"></i>
+          <span>INFORMES SEDE EL AGUSTINO</span>
+        </a>
+        <a href="https://wa.me/937475882" target="_blank"
+          class="flex-grow py-3.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs text-center flex items-center justify-center space-x-1.5 transition-all shadow-md hover:scale-[1.02] active:scale-95">
+          <i data-lucide="message-circle" class="w-4 h-4"></i>
+          <span>INFORMES SEDE SANTA ANITA</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- DELETE CONFIRM MODAL -->
+  <div id="delete-modal"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-5 text-center border border-slate-100">
+      <div class="mx-auto w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center">
+        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+      </div>
+      <p id="delete-modal-text" class="font-black text-slate-900 text-sm">¿Seguro que deseas eliminar este elemento del
+        sistema?</p>
+      <div class="flex gap-2">
+        <button onclick="hideModal('delete-modal')"
+          class="flex-grow bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs py-3 rounded-xl transition-all">Cancelar</button>
+        <button id="confirm-delete-btn"
+          class="flex-grow bg-red-600 hover:bg-red-500 text-white font-extrabold text-xs py-3 rounded-xl transition-all shadow-md">Eliminar
+          de Forma Permanente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEAD CAPTURE MODAL -->
+  <div id="lead-form-modal"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
+    <div
+      class="bg-white rounded-3xl max-w-xl w-full shadow-2xl my-4 flex flex-col max-h-[90vh] border border-slate-100">
+
+      <div class="p-6 sm:p-8 space-y-2 shrink-0 border-b border-slate-100">
+        <h3 class="text-2xl font-black text-slate-950 flex items-center gap-2">
+          <span>🏆 ¡Excelente intento!</span>
+        </h3>
+        <p class="text-xs text-slate-500 leading-relaxed font-semibold">Completa tus datos para registrar oficialmente
+          tu puntaje, activar los solucionarios detallados explicados paso a paso y recibir asesoría gratuita para Beca
+          18.</p>
+      </div>
+
+      <div class="overflow-y-auto flex-grow p-6 sm:p-8">
+        <form id="lead-form" onsubmit="submitLeadForm(event)" class="space-y-4">
+          <div class="space-y-1.5">
+            <label class="block text-[11px] font-black text-slate-500 uppercase tracking-wider" for="lead-nombre">Nombre
+              y Apellidos <span class="text-red-600">*</span></label>
+            <input type="text" id="lead-nombre" required
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all"
+              placeholder="Escribe tus nombres completos">
+          </div>
+          <div class="space-y-1.5">
+            <label class="block text-[11px] font-black text-slate-500 uppercase tracking-wider"
+              for="lead-whatsapp">Número de WhatsApp <span class="text-red-600">*</span></label>
+            <input type="tel" id="lead-whatsapp" required
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all"
+              placeholder="987654321">
+          </div>
+          <div class="space-y-1.5">
+            <label class="block text-[11px] font-black text-slate-500 uppercase tracking-wider" for="lead-email">Correo
+              Electrónico (Opcional)</label>
+            <input type="email" id="lead-email"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all"
+              placeholder="ejemplo@correo.com">
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label class="block text-[11px] font-black text-slate-500 uppercase tracking-wider"
+                for="lead-distrito">Distrito <span class="text-red-600">*</span></label>
+              <select id="lead-distrito" required
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all">
+                <option value="">Selecciona...</option>
+                <option value="Ate">Ate</option>
+                <option value="Santa Anita">Santa Anita</option>
+                <option value="El Agustino">El Agustino</option>
+                <option value="San Juan de Lurigancho">San Juan de Lurigancho</option>
+                <option value="La Molina">La Molina</option>
+                <option value="Chosica / Chaclacayo">Chosica / Chaclacayo</option>
+                <option value="Huaycán">Huaycán</option>
+                <option value="Otro">Otro distrito</option>
+              </select>
+            </div>
+            <div class="space-y-1.5">
+              <label class="block text-[11px] font-black text-slate-500 uppercase tracking-wider" for="lead-edad">Edad
+                <span class="text-red-600">*</span></label>
+              <select id="lead-edad" required
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all">
+                <option value="">Selecciona...</option>
+                <option value="Menor de 15 años">Menor de 15 años</option>
+                <option value="15 años">15 años</option>
+                <option value="16 años">16 años</option>
+                <option value="17 años">17 años</option>
+                <option value="18 años">18 años</option>
+                <option value="Más de 18 años">Más de 18 años</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="block text-[11px] font-black text-slate-500 uppercase tracking-wider"
+              for="lead-interes">¿Deseas postular a la preselección de Beca 18? <span
+                class="text-red-600">*</span></label>
+            <select id="lead-interes" required
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-red-500 focus:bg-white transition-all">
+              <option value="">Selecciona...</option>
+              <option value="Sí, estoy decidido">Sí, estoy totalmente decidido</option>
+              <option value="Aún lo estoy evaluando">Aún lo estoy evaluando</option>
+              <option value="Solo practico por pasatiempo">Solo practico por mi cuenta</option>
+            </select>
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 space-y-2">
+            <div class="flex items-start space-x-2.5">
+              <input type="checkbox" id="lead-privacidad" required
+                class="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500 mt-0.5 cursor-pointer">
+              <label for="lead-privacidad"
+                class="text-[10px] text-slate-500 leading-normal cursor-pointer font-semibold">
+                <strong>He leído y acepto los Términos de Uso y la Política de Privacidad.</strong> Autorizo a APPU a tratar mis datos personales para procesar mi participación en el simulacro, calcular mi puntaje y enviarme mis resultados. <span class="text-red-600">*</span>
+              </label>
+            </div>
+            <div class="flex items-start space-x-2.5">
+              <input type="checkbox" id="lead-marketing"
+                class="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500 mt-0.5 cursor-pointer">
+              <label for="lead-marketing"
+                class="text-[10px] text-slate-500 leading-normal cursor-pointer font-semibold">
+                Deseo recibir por WhatsApp y correo electrónico información sobre ciclos académicos, simulacros, procesos de admisión, promociones, becas, actividades educativas y otros servicios ofrecidos por APPU.
+              </label>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="p-6 sm:p-8 border-t border-slate-150 space-y-2 bg-slate-50 shrink-0 rounded-b-3xl">
+        <button type="submit" form="lead-form" id="lead-submit-btn"
+          class="w-full bg-red-600 hover:bg-red-500 text-white font-black py-4 rounded-xl transition-all flex items-center justify-center space-x-2 text-base shadow-lg">
+          <i data-lucide="rocket" class="w-5 h-5"></i>
+          <span>🚀 VER RESULTADOS Y SOLUCIONARIO EXPLICADO</span>
+        </button>
+        <button type="button" onclick="hideModal('lead-form-modal')"
+          class="w-full text-slate-400 hover:text-slate-600 font-bold py-2 text-xs transition-all text-center uppercase tracking-wider">
+          PERDERME ESTA OPORTUNIDAD
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RESUME EXAM MODAL -->
+  <div id="resume-modal"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6 border border-slate-100">
+      <div class="text-center space-y-2">
+        <div
+          class="mx-auto w-14 h-14 bg-yellow-50 text-yellow-600 rounded-full flex items-center justify-center border border-yellow-100 shadow-inner">
+          <i data-lucide="clock" class="w-7 h-7"></i>
+        </div>
+        <h4 class="text-xl font-black text-slate-900">Examen en progreso</h4>
+        <p class="text-sm text-slate-500">Detectamos que tienes un simulacro guardado que no has finalizado. ¿Deseas reanudarlo?</p>
+      </div>
+      <div class="bg-slate-50 p-4 rounded-xl border text-xs text-slate-600 space-y-1 font-semibold">
+        <p>👤 Estudiante: <span id="resume-nickname" class="text-slate-900 font-bold"></span></p>
+        <p>📋 Simulacro: <span id="resume-exam-name" class="text-slate-900 font-bold"></span></p>
+        <p>⏳ Tiempo restante: <span id="resume-time-left" class="text-slate-900 font-bold"></span></p>
+      </div>
+      <div class="flex gap-2 pt-2">
+        <button type="button" onclick="discardSavedSimulation()"
+          class="flex-grow bg-slate-100 hover:bg-slate-200 text-red-600 font-extrabold text-xs py-3.5 rounded-xl transition-all">Descartar</button>
+        <button type="button" onclick="resumeSavedSimulation()"
+          class="flex-grow bg-red-700 hover:bg-red-600 text-white font-black text-xs py-3.5 rounded-xl transition-all shadow-md">Reanudar Examen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING WIDGETS -->
+  <!-- Calculator Widget -->
+  <div id="calculator-widget" class="hidden fixed right-6 top-24 z-50 w-64 bg-slate-900/95 text-white backdrop-blur rounded-2xl border border-slate-800 shadow-2xl p-4 space-y-3 cursor-default select-none transition-all">
+    <div id="calculator-widget-header" class="flex justify-between items-center pb-2 border-b border-slate-800 cursor-move">
+      <h5 class="text-xs font-black flex items-center gap-1"><i data-lucide="calculator" class="w-4 h-4 text-indigo-400"></i> Calculadora APPU</h5>
+      <button type="button" onclick="toggleWidget('calculator-widget')" class="close-widget-btn text-slate-400 hover:text-white transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </div>
+    <input type="text" id="calc-display" class="w-full bg-slate-950 text-right text-lg font-mono font-bold px-3 py-2 rounded-xl border border-slate-800 focus:outline-none" value="0" readonly>
+    <div class="grid grid-cols-4 gap-2 text-sm font-black">
+      <button type="button" onclick="pressCalc('C')" class="py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-rose-400">C</button>
+      <button type="button" onclick="pressCalc('DEL')" class="py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-amber-400">DEL</button>
+      <button type="button" onclick="pressCalc('/')" class="py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-indigo-400">/</button>
+      <button type="button" onclick="pressCalc('*')" class="py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-indigo-400">*</button>
+
+      <button type="button" onclick="pressCalc('7')" class="py-2 bg-slate-800/50 hover:bg-slate-700 rounded-lg">7</button>
+      <button type="button" onclick="pressCalc('8')" class="py-2 bg-slate-800/50 hover:bg-slate-700 rounded-lg">8</button>
+      <button type="button" onclick="pressCalc('9')" class="py-2 bg-slate-800/50 hover:bg-slate-700 rounded-lg">9</button>
+      <button type="button" onclick="pressCalc('-')" class="py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-indigo-400">-</button>
+
+      <button type="button" onclick="pressCalc('4')" class="py-2 bg-slate-800/50 hover:bg-slate-700 rounded-lg">4</button>
+      <button type="button" onclick="pressCalc('5')" class="py-2 bg-slate-800/50 hover:bg-slate-700 rounded-lg">5</button>
+      <button type="button" onclick="pressCalc('6')" class="py-2 bg-slate-800/50 hover:bg-slate-700 rounded-lg">6</button>
+      <button type="button" onclick="pressCalc('+')" class="py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-indigo-400">+</button>
+
+      <button type="button" onclick="pressCalc('1')" class="py-2 bg-slate-800/50 hover:bg-slate-700 rounded-lg">1</button>
+      <button type="button" onclick="pressCalc('2')" class="py-2 bg-slate-800/50 hover:bg-slate-700 rounded-lg">2</button>
+      <button type="button" onclick="pressCalc('3')" class="py-2 bg-slate-800/50 hover:bg-slate-700 rounded-lg">3</button>
+      <button type="button" onclick="pressCalc('=')" class="row-span-2 py-2 bg-red-700 hover:bg-red-600 rounded-lg text-white font-bold">=</button>
+
+      <button type="button" onclick="pressCalc('0')" class="col-span-2 py-2 bg-slate-800/50 hover:bg-slate-700 rounded-lg">0</button>
+      <button type="button" onclick="pressCalc('.')" class="py-2 bg-slate-800/50 hover:bg-slate-700 rounded-lg">.</button>
+    </div>
+  </div>
+
+  <!-- Scratchpad Widget -->
+  <div id="scratchpad-widget" class="hidden fixed right-6 top-24 z-50 w-96 bg-white/95 backdrop-blur rounded-2xl border border-slate-200 shadow-2xl p-4 space-y-3 cursor-default select-none transition-all">
+    <div id="scratchpad-widget-header" class="flex justify-between items-center pb-2 border-b border-slate-200 cursor-move">
+      <h5 class="text-xs font-black text-slate-800 flex items-center gap-1"><i data-lucide="edit-3" class="w-4 h-4 text-red-600"></i> Pizarra de Trabajo APPU</h5>
+      <button type="button" onclick="toggleWidget('scratchpad-widget')" class="close-widget-btn text-slate-400 hover:text-slate-600 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </div>
+    <canvas id="scratchpad-canvas" width="352" height="240" class="bg-slate-50 border border-slate-200 rounded-xl cursor-crosshair"></canvas>
+    <div class="flex items-center justify-between gap-2 text-xs font-bold">
+      <div class="flex gap-1.5 items-center">
+        <span class="text-[10px] text-slate-400 uppercase">Lápiz:</span>
+        <button type="button" onclick="setScratchColor('#0f172a', this)" class="color-btn w-6 h-6 rounded-full bg-slate-900 ring-2 ring-offset-2 ring-indigo-600" title="Negro"></button>
+        <button type="button" onclick="setScratchColor('#dc2626', this)" class="color-btn w-6 h-6 rounded-full bg-red-600" title="Rojo"></button>
+        <button type="button" onclick="setScratchColor('#2563eb', this)" class="color-btn w-6 h-6 rounded-full bg-blue-600" title="Azul"></button>
+      </div>
+      <div class="flex gap-2">
+        <button type="button" onclick="toggleEraser(this)" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg flex items-center gap-1 transition-colors" title="Borrador">
+          <i data-lucide="eraser" class="w-3.5 h-3.5"></i>
+          <span>Borrar</span>
+        </button>
+        <button type="button" onclick="clearScratchpad()" class="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg flex items-center gap-1 transition-colors" title="Limpiar todo">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span>Limpiar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST ALERTS -->
+  <div id="toast"
+    class="hidden fixed bottom-5 right-5 z-50 p-4 rounded-2xl shadow-xl border text-sm font-extrabold animate-slideIn flex items-center space-x-2.5">
+  </div>
+
+  <!-- MAIN SCRIPT -->
+  <script>
+    const ADMIN_PASSWORD = 'appubeca2026$';
+
+        // generateBecaQuestions se carga externamente desde simulador_beca_18_preguntas.js
+
+    // Datos iniciales completos pre-cargados
+    const INITIAL_EXAMS = [
+      {
+        id: 'exam_demo_1',
+        name: 'Simulacro Oficial Beca 18 - APPU 2026',
+        questions: generateBecaQuestions()
+      }
+    ];
+
+    // Datos simulados de Ranking
+    const MOCK_RANKINGS = [
+      { nickname: 'MILAGROS_ATE', score: 116, time_seconds: 3540, exam_name: 'Simulacro Oficial Beca 18 - APPU 2026', timestamp: Date.now() - 3600000 },
+      { nickname: 'RODRIGO_S_ANITA', score: 110, time_seconds: 4120, exam_name: 'Simulacro Oficial Beca 18 - APPU 2026', timestamp: Date.now() - 7200000 },
+      { nickname: 'ALEXANDER_SJL', score: 104, time_seconds: 4800, exam_name: 'Simulacro Oficial Beca 18 - APPU 2026', timestamp: Date.now() - 10800000 },
+      { nickname: 'YOSELIN_EL_AGUSTINO', score: 98, time_seconds: 3900, exam_name: 'Simulacro Oficial Beca 18 - APPU 2026', timestamp: Date.now() - 14400000 },
+      { nickname: 'TALENTO_APPU', score: 94, time_seconds: 5200, exam_name: 'Simulacro Oficial Beca 18 - APPU 2026', timestamp: Date.now() - 18000000 }
+    ];
+
+    // Global state
+    const state = {
+      exams: JSON.parse(localStorage.getItem('beca18_exams_appu')) || INITIAL_EXAMS,
+      activeTab: 'inicio',
+      isAdminLoggedIn: false,
+      simulationActive: false,
+      simQuestions: [],
+      simExamId: null,
+      currentIdx: 0,
+      selectedAnswers: {},
+      flaggedQuestions: {},
+      timeLeft: 0,
+      timerId: null,
+      simulationFinished: false,
+      showSolutions: false,
+      showSimpleResults: false,
+      editingId: null,
+      editingExamId: null,
+      formCorrectAnswer: 0,
+      practiceAnswers: {},
+      revealedSolutions: {},
+      filterCategory: 'Todos',
+      filterExam: 'all',
+      userNickname: '',
+      simStartTime: 0,
+      rankings: JSON.parse(localStorage.getItem('beca18_rankings_appu')) || MOCK_RANKINGS,
+      leads: JSON.parse(localStorage.getItem('beca18_leads_appu')) || []
+    };
+
+    function saveLeads() {
+      localStorage.setItem('beca18_leads_appu', JSON.stringify(state.leads));
+    }
+
+    let leadSDKReady = false;
+
+    function saveData() {
+      localStorage.setItem('beca18_exams_appu', JSON.stringify(state.exams));
+    }
+
+    function saveRankings() {
+      localStorage.setItem('beca18_rankings_appu', JSON.stringify(state.rankings));
+    }
+
+    function getCompleteExams() {
+      return state.exams.filter(e => e.questions.length >= 60);
+    }
+
+    function getAllQuestions() {
+      return state.exams.flatMap(e => e.questions.map(q => ({ ...q, examName: e.name, examId: e.id })));
+    }
+
+    // Dynamic state renderer for Math rendering with KaTeX
+    function renderMath() {
+      if (typeof renderMathInElement === 'function') {
+        renderMathInElement(document.body, {
+          delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '$', right: '$', display: false }
+          ],
+          throwOnError: false
+        });
+      }
+    }
+
+    function updateStats() {
+      const completeCount = getCompleteExams().length;
+      const totalExams = state.exams.length;
+      document.getElementById('stat-exams').textContent = `${completeCount} Completo${completeCount !== 1 ? 's' : ''} (${totalExams} Total)`;
+      renderRanking();
+    }
+
+    // Tabs switching logic
+    function switchTab(tab) {
+      if (state.simulationActive) return;
+      state.activeTab = tab;
+
+      document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.add('hidden'));
+      const target = document.getElementById('tab-' + tab);
+      if (target) target.classList.remove('hidden');
+
+      updateNavHighlight();
+
+      if (tab === 'simulador') updateSimConfig();
+      if (tab === 'banco') renderBanco();
+      if (tab === 'admin') renderAdmin();
+      if (tab === 'inicio') updateStats();
+
+      // Render mathematical equations dynamically after layout shifts
+      setTimeout(renderMath, 50);
+    }
+
+    function updateNavHighlight() {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        const t = btn.dataset.tab;
+        if (t === state.activeTab) {
+          btn.className = 'tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-black transition-all bg-white text-red-950 shadow-md';
+        } else {
+          btn.className = 'tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all text-white hover:bg-white/10';
+        }
+      });
+
+      const adminBtn = document.querySelector('[data-tab="admin"]');
+      if (state.isAdminLoggedIn && state.activeTab !== 'admin') {
+        adminBtn.className = 'tab-btn px-3 py-1.5 rounded-lg text-xs sm:text-sm font-black transition-all bg-emerald-600 text-white hover:bg-emerald-500 flex items-center space-x-1 shadow';
+      }
+      document.getElementById('logout-btn').classList.toggle('hidden', !state.isAdminLoggedIn);
+    }
+
+    // Modal helpers
+    function showModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+    }
+    function hideModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    // Admin Auth
+    function tryAccessAdmin() {
+      if (state.isAdminLoggedIn) switchTab('admin');
+      else showModal('login-modal');
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      if (document.getElementById('admin-pass').value === ADMIN_PASSWORD) {
+        state.isAdminLoggedIn = true;
+        hideModal('login-modal');
+        document.getElementById('admin-pass').value = '';
+        switchTab('admin');
+        showToast('Panel de Control Autorizado', 'success');
+      } else {
+        showToast('Clave incorrecta. Solicítela a dirección.', 'error');
+      }
+    }
+
+    function adminLogout() {
+      state.isAdminLoggedIn = false;
+      switchTab('inicio');
+      showToast('Sesión de administrador cerrada', 'error');
+    }
+
+    function showToast(msg, type) {
+      const t = document.getElementById('toast');
+      t.className = `fixed bottom-5 right-5 z-50 p-4 rounded-xl shadow-lg border text-sm font-extrabold animate-slideIn flex items-center space-x-2 ${type === 'error' ? 'bg-red-50 text-red-800 border-red-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+        }`;
+      t.innerHTML = `<span>${msg}</span>`;
+      t.classList.remove('hidden');
+      setTimeout(() => t.classList.add('hidden'), 3500);
+    }
+
+    // Simulator Configuration & Activation
+    function updateSimConfig() {
+      const complete = getCompleteExams();
+      const sel = document.getElementById('sel-exam');
+      sel.innerHTML = '';
+
+      if (!complete.length) {
+        document.getElementById('sim-empty-warning').classList.remove('hidden');
+        document.getElementById('sim-warning-desc').textContent = 'El administrador aún no ha cargado exámenes completos de 60 preguntas. Puedes crearlos en el panel administrativo.';
+        document.getElementById('sim-config').classList.add('hidden');
+
+        // Permite practicar con exámenes parciales
+        state.exams.forEach(e => {
+          if (e.questions.length > 0) {
+            sel.innerHTML += `<option value="${e.id}">${e.name} (${e.questions.length}/60 preguntas)</option>`;
+          }
+        });
+        if (sel.options.length > 0) {
+          document.getElementById('sim-config').classList.remove('hidden');
+        }
+        return;
+      }
+
+      document.getElementById('sim-empty-warning').classList.add('hidden');
+      document.getElementById('sim-config').classList.remove('hidden');
+
+      complete.forEach(e => {
+        sel.innerHTML += `<option value="${e.id}">${e.name} (60 de 60 preguntas)</option>`;
+      });
+
+      // Añade exámenes parciales al final por si quieren practicar de todos modos
+      state.exams.filter(e => e.questions.length > 0 && e.questions.length < 60).forEach(e => {
+        sel.innerHTML += `<option value="${e.id}">${e.name} (Incompleto - ${e.questions.length} preguntas)</option>`;
+      });
+    }
+
+    function startSimulation() {
+      const examId = document.getElementById('sel-exam').value;
+      const exam = state.exams.find(e => e.id === examId);
+      if (!exam || !exam.questions.length) {
+        showToast('Selecciona un examen válido', 'error');
+        return;
+      }
+
+      document.getElementById('nickname-input').value = '';
+      showModal('nickname-modal');
+    }
+
+    function submitNickname(e) {
+      e.preventDefault();
+      const nickname = document.getElementById('nickname-input').value.trim().toUpperCase();
+      if (!nickname) {
+        showToast('Ingresa un apodo válido', 'error');
+        return;
+      }
+
+      state.userNickname = nickname;
+      hideModal('nickname-modal');
+
+      // Inicializar el Examen
+      const examId = document.getElementById('sel-exam').value;
+      const exam = state.exams.find(e => e.id === examId);
+      const time = parseInt(document.getElementById('sel-time').value);
+
+      state.simExamId = examId;
+      state.simQuestions = [...exam.questions];
+      state.currentIdx = 0;
+      state.selectedAnswers = {};
+      state.flaggedQuestions = {};
+      state.timeLeft = time;
+      state.simulationFinished = false;
+      state.simulationActive = true;
+      state.showSolutions = false;
+      state.simStartTime = Date.now();
+
+      document.getElementById('sim-user-display').textContent = state.userNickname;
+      document.getElementById('nav-tabs').classList.add('hidden');
+      document.getElementById('sim-timer').classList.remove('hidden');
+
+      document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.add('hidden'));
+      document.getElementById('tab-sim-active').classList.remove('hidden');
+
+      renderSimQuestion();
+      renderNavGrid();
+      startTimer();
+    }
+
+    function startTimer() {
+      clearInterval(state.timerId);
+      updateTimerDisplay();
+      state.timerId = setInterval(() => {
+        state.timeLeft--;
+        updateTimerDisplay();
+        saveActiveSimulationProgress();
+        if (state.timeLeft <= 0) {
+          clearInterval(state.timerId);
+          finishSimulation();
+        }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      const m = Math.floor(state.timeLeft / 60).toString().padStart(2, '0');
+      const s = (state.timeLeft % 60).toString().padStart(2, '0');
+      const el = document.getElementById('timer-display');
+      el.textContent = m + ':' + s;
+
+      if (state.timeLeft < 300) {
+        el.className = 'text-yellow-400 font-black animate-pulse';
+      } else {
+        el.className = 'text-white font-mono';
+      }
+    }
+
+    function updateProgressBar() {
+      const total = state.simQuestions.length;
+      const answered = Object.keys(state.selectedAnswers).length;
+      const pct = total > 0 ? Math.round((answered / total) * 100) : 0;
+
+      document.getElementById('sim-progress-bar').style.width = pct + '%';
+      document.getElementById('sim-progress-txt').textContent = `${answered}/${total}`;
+    }
+
+    function renderNavGrid() {
+      const grid = document.getElementById('nav-grid');
+      grid.innerHTML = '';
+
+      state.simQuestions.forEach((q, i) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+
+        const answered = state.selectedAnswers[q.id] !== undefined;
+        const flagged = state.flaggedQuestions[q.id];
+        const current = i === state.currentIdx;
+
+        let cls = 'h-9 w-full rounded-xl font-black text-xs border flex items-center justify-center transition-all ';
+        if (flagged) {
+          cls += 'bg-yellow-400 text-slate-900 border-yellow-500 shadow-sm';
+        } else if (answered) {
+          cls += 'bg-red-700 text-white border-red-800 shadow-sm';
+        } else {
+          cls += 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100';
+        }
+
+        if (current) {
+          cls += ' ring-2 ring-indigo-950 ring-offset-2';
+        }
+
+        btn.className = cls;
+        btn.textContent = i + 1;
+        btn.onclick = () => {
+          state.currentIdx = i;
+          renderSimQuestion();
+          renderNavGrid();
+        };
+        grid.appendChild(btn);
+      });
+
+      updateProgressBar();
+    }
+
+    function renderSimQuestion() {
+      const q = state.simQuestions[state.currentIdx];
+      document.getElementById('q-number').textContent = `Pregunta ${state.currentIdx + 1} de ${state.simQuestions.length}`;
+      document.getElementById('q-category').textContent = q.category;
+
+      // Enunciado
+      const textEl = document.getElementById('q-text');
+      textEl.textContent = q.question;
+
+      // Imagen de enunciado
+      const qImg = document.getElementById('q-img');
+      if (q.questionImg) {
+        qImg.src = q.questionImg;
+        qImg.classList.remove('hidden');
+      } else {
+        qImg.classList.add('hidden');
+      }
+
+      // Marcar para revisar
+      const flagged = state.flaggedQuestions[q.id];
+      const fb = document.getElementById('flag-btn');
+      fb.className = `text-xs font-bold px-3 py-1.5 rounded-lg border transition-all flex items-center space-x-1.5 ${flagged ? 'bg-yellow-100 border-yellow-400 text-yellow-800' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+        }`;
+      fb.querySelector('span').textContent = flagged ? 'Marcada' : 'Marcar para revisar';
+
+      // Opciones
+      const container = document.getElementById('q-options');
+      container.innerHTML = '';
+
+      q.options.forEach((opt, i) => {
+        const selected = state.selectedAnswers[q.id] === i;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        
+        let imgHtml = '';
+        if (q.optionImages && q.optionImages[i] && (q.optionImages[i].startsWith('http') || q.optionImages[i].startsWith('data:image'))) {
+          imgHtml = `<img src="${q.optionImages[i]}" class="max-w-xs rounded-lg border border-slate-200 shadow-sm object-contain mt-1" style="max-height: 120px;">`;
+        }
+
+        btn.className = `p-4 rounded-xl border text-left text-sm flex flex-col gap-3 transition-all ${selected
+            ? 'border-red-600 bg-red-50/50 text-red-950 font-black shadow-sm'
+            : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/40 text-slate-700'
+          }`;
+
+        btn.innerHTML = `
+          <div class="flex items-center justify-between w-full">
+            <div class="flex items-center space-x-3.5">
+              <span class="w-8 h-8 rounded-full font-black text-xs border flex items-center justify-center shrink-0 ${selected ? 'bg-red-600 text-white border-red-700' : 'bg-white border-slate-300 text-slate-500'
+            }">${String.fromCharCode(65 + i)}</span>
+              <span class="select-text">${opt}</span>
+            </div>
+            <div class="w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${selected ? 'border-red-600 bg-red-600 text-white' : 'border-slate-300'
+            }">${selected ? '✓' : ''}</div>
+          </div>
+          ${imgHtml ? `<div class="pl-12">${imgHtml}</div>` : ''}
+        `;
+
+        btn.onclick = () => {
+          state.selectedAnswers[q.id] = i;
+          saveActiveSimulationProgress();
+          renderSimQuestion();
+          renderNavGrid();
+        };
+        container.appendChild(btn);
+      });
+
+      // Controles de Navegación
+      document.getElementById('sim-prev-btn').classList.toggle('invisible', state.currentIdx === 0);
+      document.getElementById('sim-next-btn').classList.toggle('invisible', state.currentIdx === state.simQuestions.length - 1);
+
+      // Render de formulas KaTeX después de inyectar las preguntas
+      setTimeout(renderMath, 20);
+    }
+
+    function simPrev() {
+      if (state.currentIdx > 0) {
+        state.currentIdx--;
+        renderSimQuestion();
+        renderNavGrid();
+      }
+    }
+    function simNext() {
+      if (state.currentIdx < state.simQuestions.length - 1) {
+        state.currentIdx++;
+        renderSimQuestion();
+        renderNavGrid();
+      }
+    }
+    function toggleFlag() {
+      const id = state.simQuestions[state.currentIdx].id;
+      state.flaggedQuestions[id] = !state.flaggedQuestions[id];
+      saveActiveSimulationProgress();
+      renderSimQuestion();
+      renderNavGrid();
+    }
+
+    function finishSimulation() {
+      clearInterval(state.timerId);
+      state.simulationFinished = true;
+      state.simulationActive = false;
+      clearActiveSimulationProgress();
+
+      document.getElementById('sim-timer').classList.add('hidden');
+      document.getElementById('nav-tabs').classList.remove('hidden');
+
+      // Calcular puntaje
+      let correct = 0;
+      state.simQuestions.forEach(q => {
+        const a = state.selectedAnswers[q.id];
+        if (a === q.correctAnswer) correct++;
+      });
+      const score = correct * 2;
+      const timeSpent = state.simStartTime > 0 ? Math.floor((Date.now() - state.simStartTime) / 1000) : 0;
+
+      // Añadir al ranking
+      if (state.userNickname) {
+        state.rankings.push({
+          nickname: state.userNickname,
+          score: score,
+          time_seconds: timeSpent,
+          exam_name: state.exams.find(e => e.id === state.simExamId)?.name || 'Simulacro APPU',
+          timestamp: Date.now()
+        });
+
+        // Ordenar: Puntaje descendente, Tiempo ascendente
+        state.rankings.sort((a, b) => b.score !== a.score ? b.score - a.score : a.time_seconds - b.time_seconds);
+        state.rankings = state.rankings.slice(0, 5);
+        saveRankings();
+      }
+
+      document.getElementById('tab-sim-active').classList.add('hidden');
+      document.getElementById('tab-results').classList.remove('hidden');
+      renderResults();
+    }
+
+    function renderResults() {
+      let correct = 0, incorrect = 0, unanswered = 0;
+      state.simQuestions.forEach(q => {
+        const a = state.selectedAnswers[q.id];
+        if (a === undefined) unanswered++;
+        else if (a === q.correctAnswer) correct++;
+        else incorrect++;
+      });
+
+      const score = correct * 2;
+      const max = state.simQuestions.length * 2;
+      const pct = max > 0 ? Math.round((score / max) * 100) : 0;
+
+      document.getElementById('res-score').textContent = score + ' Pts';
+      document.getElementById('res-max').textContent = `de un total de ${max} Pts`;
+      document.getElementById('res-correct').textContent = correct;
+      document.getElementById('res-incorrect').textContent = incorrect;
+      document.getElementById('res-unanswered').textContent = unanswered;
+
+      // Diagnósticos
+      let diag = '';
+      let advice = '';
+      if (pct >= 85) {
+        diag = '🎯 Nivel Excelente (Preseleccionado Seguro)';
+        advice = '¡Impresionante rendimiento! Estás al nivel de los mejores puntajes nacionales. Sigue practicando para consolidar tu velocidad.';
+      } else if (pct >= 65) {
+        diag = '📈 Nivel Competitivo (Camino Correcto)';
+        advice = 'Tienes bases muy sólidas. Puliendo pequeños errores conceptuales y optimizando tu tiempo lograrás asegurar la vacante.';
+      } else if (pct >= 40) {
+        diag = '📚 Nivel Básico (Requiere Reforzamiento)';
+        advice = 'Vas por buen camino, pero necesitas profundizar la teoría y la resolución de problemas tipo examen. Te recomendamos revisar nuestro ciclo intensivo.';
+      } else {
+        diag = '⚠️ Alerta de Reforzamiento Crítico';
+        advice = 'Para competir en Beca 18 necesitas un entrenamiento guiado de urgencia. Te apoyaremos paso a paso en la Academia APPU.';
+      }
+
+      document.getElementById('res-diagnosis').textContent = diag;
+      document.getElementById('res-advice').textContent = advice;
+
+      document.getElementById('solutions-list').classList.add('hidden');
+      document.getElementById('btn-solutions').classList.add('hidden');
+      
+      const btnSimple = document.getElementById('btn-simple-results');
+      if (btnSimple) {
+        btnSimple.querySelector('span').textContent = 'Ver Resultados';
+      }
+      state.showSimpleResults = false;
+      state.showSolutions = false;
+    }
+
+    function toggleSimpleResults() {
+      state.showSimpleResults = !state.showSimpleResults;
+      
+      if (state.showSimpleResults) {
+        state.showSolutions = false;
+        const btnDetailed = document.getElementById('btn-solutions');
+        if (btnDetailed) {
+          btnDetailed.querySelector('span').textContent = 'Ver Solucionarios';
+        }
+      }
+
+      const list = document.getElementById('solutions-list');
+      const btnSimple = document.getElementById('btn-simple-results');
+      btnSimple.querySelector('span').textContent = state.showSimpleResults ? 'Ocultar Resultados' : 'Ver Resultados';
+
+      if (!state.showSimpleResults) {
+        list.classList.add('hidden');
+        return;
+      }
+
+      list.classList.remove('hidden');
+      renderSolutionsList(false); // Render WITHOUT details
+    }
+
+    function toggleSolutions() {
+      state.showSolutions = !state.showSolutions;
+      
+      if (state.showSolutions) {
+        state.showSimpleResults = false;
+        const btnSimple = document.getElementById('btn-simple-results');
+        if (btnSimple) {
+          btnSimple.querySelector('span').textContent = 'Ver Resultados';
+        }
+      }
+
+      const list = document.getElementById('solutions-list');
+      const btnDetailed = document.getElementById('btn-solutions');
+      btnDetailed.querySelector('span').textContent = state.showSolutions ? 'Ocultar Solucionarios' : 'Ver Solucionarios';
+
+      if (!state.showSolutions) {
+        list.classList.add('hidden');
+        return;
+      }
+
+      list.classList.remove('hidden');
+      renderSolutionsList(true); // Render WITH details
+    }
+
+    function renderSolutionsList(showDetails) {
+      const list = document.getElementById('solutions-list');
+      list.innerHTML = '';
+
+      state.simQuestions.forEach((q, idx) => {
+        const ans = state.selectedAnswers[q.id];
+        const isCorrect = ans === q.correctAnswer;
+        const noAns = ans === undefined;
+
+        const borderClass = noAns ? 'border-l-slate-400' : isCorrect ? 'border-l-emerald-500' : 'border-l-red-600';
+
+        let html = `<div class="bg-white rounded-2xl border border-l-8 ${borderClass} border-slate-200 p-6 shadow-sm space-y-4 animate-fadeIn">`;
+        html += `
+          <div class="flex justify-between items-center flex-wrap gap-2">
+            <span class="bg-slate-100 text-slate-800 font-extrabold text-xs px-2.5 py-1 rounded-md">Pregunta ${idx + 1}</span>
+            <span class="text-xs font-black text-slate-500 uppercase">${q.category}</span>
+        `;
+
+        if (noAns) {
+          html += `<span class="bg-slate-100 text-slate-600 text-xs font-black px-3 py-1 rounded-full">Sin responder</span>`;
+        } else if (isCorrect) {
+          html += `<span class="bg-emerald-50 text-emerald-700 text-xs font-black px-3 py-1 rounded-full">✓ Correcta (+2 pts)</span>`;
+        } else {
+          html += `<span class="bg-red-50 text-red-700 text-xs font-black px-3 py-1 rounded-full">✗ Incorrecta (0 pts)</span>`;
+        }
+
+        html += `</div>`;
+        html += `<p class="font-bold text-slate-900 whitespace-pre-wrap leading-relaxed select-text">${q.question}</p>`;
+
+        if (q.questionImg) {
+          html += `<img src="${q.questionImg}" alt="Gráfico del ejercicio" class="w-full max-w-2xl rounded-xl border border-slate-200 shadow-sm mx-auto">`;
+        }
+
+        html += `<div class="grid grid-cols-1 gap-2.5">`;
+        q.options.forEach((opt, oi) => {
+          let cls = 'border-slate-200 bg-slate-50 text-slate-700';
+          if (oi === q.correctAnswer) {
+            cls = 'border-emerald-300 bg-emerald-50 text-emerald-950 font-bold';
+          } else if (ans === oi) {
+            cls = 'border-red-300 bg-red-50 text-red-950';
+          }
+
+          let imgHtml = '';
+          if (q.optionImages && q.optionImages[oi] && (q.optionImages[oi].startsWith('http') || q.optionImages[oi].startsWith('data:image'))) {
+            imgHtml = `<img src="${q.optionImages[oi]}" class="max-w-xs rounded-lg border border-slate-200 shadow-sm object-contain mt-1" style="max-height: 120px;">`;
+          }
+
+          html += `
+            <div class="p-3.5 rounded-xl border text-sm flex flex-col gap-2.5 ${cls}">
+              <div class="flex items-center justify-between w-full">
+                <div class="flex items-center space-x-3">
+                  <span class="font-black text-xs bg-white border border-slate-300 w-6 h-6 rounded-full flex items-center justify-center shrink-0">${String.fromCharCode(65 + oi)}</span>
+                  <span class="select-text">${opt}</span>
+                </div>
+                ${oi === q.correctAnswer ? '<span class="text-emerald-600 font-bold">Clave Correcta</span>' : (ans === oi ? '<span class="text-red-500 font-bold">Tu Marcación</span>' : '')}
+              </div>
+              ${imgHtml ? `<div class="pl-9">${imgHtml}</div>` : ''}
+            </div>`;
+        });
+        html += `</div>`;
+
+        // Explicación de la solución
+        if (showDetails && q.solutionText) {
+          html += `
+            <div class="bg-indigo-50/50 border border-indigo-100 rounded-xl p-4.5 space-y-2 mt-2">
+              <h5 class="text-xs font-black text-indigo-950 uppercase tracking-wider flex items-center gap-1">
+                <i data-lucide="help-circle" class="w-4 h-4 text-indigo-700"></i> Resolución Explicada APPU
+              </h5>
+              <p class="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed select-text">${q.solutionText}</p>
+          `;
+          if (q.solutionImg) {
+            html += `<img src="${q.solutionImg}" alt="Gráfico explicativo" class="w-full max-w-md rounded-lg mt-3 border border-indigo-200 shadow-sm mx-auto">`;
+          }
+          html += `</div>`;
+        }
+
+        html += `</div>`;
+        list.innerHTML += html;
+      });
+
+      lucide.createIcons();
+      setTimeout(renderMath, 20);
+    }
+
+    function repeatSimulation() {
+      startSimulation();
+    }
+
+    function exitSimulation() {
+      state.simulationActive = false;
+      state.simulationFinished = false;
+      clearInterval(state.timerId);
+      clearActiveSimulationProgress();
+
+      document.getElementById('sim-timer').classList.add('hidden');
+      document.getElementById('nav-tabs').classList.remove('hidden');
+
+      document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.add('hidden'));
+      document.getElementById('tab-results').classList.add('hidden');
+
+      switchTab('inicio');
+    }
+
+    // BANCO DE EJERCICIOS (PRACTICE MODE)
+    function renderBanco() {
+      const filters = document.getElementById('banco-filters');
+      filters.innerHTML = '';
+
+      ['Todos', 'Competencia Matemática', 'Competencia Lectora'].forEach(cat => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `px-3.5 py-1.5 rounded-lg text-xs font-black border transition-all ${state.filterCategory === cat
+            ? 'bg-red-700 border-red-700 text-white shadow-sm'
+            : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+          }`;
+        btn.textContent = cat;
+        btn.onclick = () => {
+          state.filterCategory = cat;
+          renderBanco();
+        };
+        filters.appendChild(btn);
+      });
+
+      // Populate exam selection dropdown dynamically
+      const examSelect = document.getElementById('banco-exam-select');
+      const currentSelected = examSelect ? examSelect.value : 'all';
+      if (examSelect) {
+        examSelect.innerHTML = '<option value="all">Todos los Simulacros</option>';
+        state.exams.forEach(e => {
+          examSelect.innerHTML += `<option value="${e.id}">${e.name}</option>`;
+        });
+        if ([...examSelect.options].some(opt => opt.value === currentSelected)) {
+          examSelect.value = currentSelected;
+        } else {
+          examSelect.value = 'all';
+        }
+      }
+
+      const search = document.getElementById('banco-search-input') ? document.getElementById('banco-search-input').value.toLowerCase() : '';
+      const selectedExam = examSelect ? examSelect.value : 'all';
+
+      const allQ = getAllQuestions();
+      const filtered = allQ.filter(q => {
+        const matchesCategory = state.filterCategory === 'Todos' || q.category === state.filterCategory;
+        const matchesSearch = q.question.toLowerCase().includes(search);
+        const matchesExam = selectedExam === 'all' || q.examId === selectedExam;
+        return matchesCategory && matchesSearch && matchesExam;
+      });
+
+      const list = document.getElementById('banco-list');
+      if (!filtered.length) {
+        list.innerHTML = `
+          <div class="bg-white rounded-2xl border p-12 text-center">
+            <p class="font-extrabold text-slate-500">No hay ejercicios registrados que coincidan con los filtros.</p>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = '';
+      filtered.forEach((q, idx) => {
+        const selected = state.practiceAnswers[q.id];
+        const revealed = state.revealedSolutions[q.id];
+
+        const div = document.createElement('div');
+        div.className = 'bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4';
+
+        let html = `
+          <div class="flex justify-between items-center flex-wrap gap-2">
+            <span class="bg-slate-100 text-slate-800 font-black text-xs px-2.5 py-1 rounded-md">Ejercicio ${idx + 1}</span>
+            <span class="text-slate-400 font-black text-[10px] uppercase tracking-wider">${q.category}</span>
+            <span class="text-indigo-600 font-bold text-xs bg-indigo-50 px-2.5 py-1 rounded-full">${q.examName}</span>
+          </div>`;
+
+        html += `<p class="font-bold text-slate-900 whitespace-pre-wrap leading-relaxed select-text">${q.question}</p>`;
+
+        if (q.questionImg) {
+          html += `<img src="${q.questionImg}" alt="Gráfico del ejercicio" class="w-full max-w-2xl rounded-xl border border-slate-200 shadow-sm mx-auto">`;
+        }
+
+        html += `<div class="grid grid-cols-1 gap-2.5">`;
+        q.options.forEach((opt, oi) => {
+          let cls = 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50/50';
+
+          if (selected === oi) {
+            if (revealed) {
+              cls = oi === q.correctAnswer ? 'border-emerald-500 bg-emerald-50 text-emerald-950 font-bold shadow-sm' : 'border-red-500 bg-red-50 text-red-950';
+            } else {
+              cls = 'border-slate-800 bg-slate-800 text-white font-bold shadow-md';
+            }
+          } else if (revealed && oi === q.correctAnswer) {
+            cls = 'border-emerald-300 bg-emerald-50 text-emerald-900 font-bold';
+          }
+
+          let imgHtml = '';
+          if (q.optionImages && q.optionImages[oi] && (q.optionImages[oi].startsWith('http') || q.optionImages[oi].startsWith('data:image'))) {
+            imgHtml = `<img src="${q.optionImages[oi]}" class="max-w-xs rounded-lg border border-slate-200 shadow-sm object-contain mt-1" style="max-height: 120px;">`;
+          }
+
+          html += `
+            <button type="button" ${revealed ? 'disabled' : ''} onclick="selectPractice('${q.id}', ${oi})" class="p-3.5 rounded-xl border text-left text-sm flex flex-col gap-2.5 transition-all ${cls}">
+              <div class="flex items-center justify-between w-full">
+                <div class="flex items-center space-x-3">
+                  <span class="w-7 h-7 rounded-full font-black text-xs border flex items-center justify-center shrink-0">${String.fromCharCode(65 + oi)}</span>
+                  <span class="select-text">${opt}</span>
+                </div>
+                ${revealed && oi === q.correctAnswer ? '<span class="text-emerald-600 font-bold">✓</span>' : ''}
+                ${revealed && selected === oi && oi !== q.correctAnswer ? '<span class="text-red-500 font-bold">✗</span>' : ''}
+              </div>
+              ${imgHtml ? `<div class="pl-10">${imgHtml}</div>` : ''}
+            </button>`;
+        });
+        html += `</div>`;
+
+        html += `
+          <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+            <button type="button" onclick="toggleReveal('${q.id}')" class="px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center space-x-1.5 ${revealed ? 'bg-slate-100 text-slate-700' : 'bg-red-700 text-white shadow-md hover:bg-red-600'
+          }">
+              <i data-lucide="${revealed ? 'eye-off' : 'eye'}" class="w-4 h-4"></i>
+              <span>${revealed ? 'Ocultar Explicación' : 'Revelar Solución'}</span>
+            </button>
+          </div>`;
+
+        if (revealed && q.solutionText) {
+          html += `
+            <div class="bg-indigo-50/50 border border-indigo-100 rounded-xl p-4.5 space-y-2 mt-3">
+              <h5 class="text-xs font-black text-indigo-950 uppercase tracking-wider">Desarrollo Didáctico</h5>
+              <p class="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed select-text">${q.solutionText}</p>`;
+          if (q.solutionImg) {
+            html += `<img src="${q.solutionImg}" alt="Gráfico explicativo" class="w-full max-w-md rounded-lg mt-3 border border-indigo-200 shadow-sm mx-auto">`;
+          }
+          html += `</div>`;
+        }
+
+        div.innerHTML = html;
+        list.appendChild(div);
+      });
+
+      lucide.createIcons();
+      setTimeout(renderMath, 20);
+    }
+
+    function selectPractice(id, idx) {
+      state.practiceAnswers[id] = idx;
+      renderBanco();
+    }
+
+    function toggleReveal(id) {
+      state.revealedSolutions[id] = !state.revealedSolutions[id];
+      renderBanco();
+    }
+
+    // HOME: RANKING VIEW RENDER
+    function renderRanking() {
+      const section = document.getElementById('ranking-section');
+      if (!state.rankings || state.rankings.length === 0) {
+        section.classList.add('hidden');
+        return;
+      }
+
+      section.classList.remove('hidden');
+      const list = document.getElementById('ranking-list');
+      list.innerHTML = '';
+
+      state.rankings.forEach((r, idx) => {
+        const mins = Math.floor(r.time_seconds / 60);
+        const secs = r.time_seconds % 60;
+        const timeStr = `${mins}m ${secs.toString().padStart(2, '0')}s`;
+
+        const medals = ['🥇', '🥈', '🥉', '🏅', '🏅'];
+        const badgeColor = idx === 0 ? 'bg-amber-100 border-amber-300' : idx === 1 ? 'bg-slate-100 border-slate-300' : 'bg-white border-slate-200';
+
+        const div = document.createElement('div');
+        div.className = `p-4 rounded-2xl border ${badgeColor} shadow-sm flex flex-col justify-between space-y-2 text-center`;
+        div.innerHTML = `
+          <div class="text-2xl">${medals[idx]}</div>
+          <div>
+            <p class="font-black text-slate-900 text-sm truncate uppercase">${r.nickname}</p>
+            <p class="text-[10px] text-slate-400 font-extrabold truncate mt-0.5">${r.exam_name}</p>
+          </div>
+          <div class="pt-2 border-t border-slate-100">
+            <p class="text-sm font-black text-red-700">${r.score} Puntos</p>
+            <p class="text-[10px] text-slate-400 font-bold">${timeStr}</p>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    // ADMINISTRATIVE PANEL ACTIONS
+    function renderAdmin() {
+      renderExamList();
+      renderAdminList();
+      renderKeyButtons();
+      renderOptionsInputs();
+      updateExamSelect();
+      updateLeadsExamSelect();
+      renderLeadsTable();
+    }
+
+    function updateLeadsExamSelect() {
+      const filter = document.getElementById('leads-filter-exam');
+      if (!filter) return;
+      filter.innerHTML = '<option value="all">Todos los Exámenes</option>';
+      
+      const examNames = [...new Set(state.leads.map(l => l.exam_name))];
+      examNames.forEach(name => {
+        filter.innerHTML += `<option value="${name}">${name}</option>`;
+      });
+    }
+
+    function renderLeadsTable() {
+      const search = document.getElementById('leads-search-input').value.toLowerCase();
+      const examFilter = document.getElementById('leads-filter-exam').value;
+      const tbody = document.getElementById('leads-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const filtered = state.leads.filter(l => {
+        const matchesSearch = l.nombre.toLowerCase().includes(search) || 
+                              l.whatsapp.includes(search) || 
+                              l.distrito.toLowerCase().includes(search);
+        const matchesExam = examFilter === 'all' || l.exam_name === examFilter;
+        return matchesSearch && matchesExam;
+      });
+
+      document.getElementById('leads-empty-msg').classList.toggle('hidden', filtered.length > 0);
+
+      filtered.forEach(l => {
+        const dateStr = new Date(l.timestamp).toLocaleString('es-PE', { timeZone: 'America/Lima' });
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 transition-colors';
+        tr.innerHTML = `
+          <td class="px-4 py-3 font-bold text-slate-900 border-b border-slate-100">${l.nombre}</td>
+          <td class="px-4 py-3 text-slate-600 border-b border-slate-100">${l.whatsapp}</td>
+          <td class="px-4 py-3 text-slate-500 border-b border-slate-100 truncate max-w-[150px]" title="${l.email || ''}">${l.email || '-'}</td>
+          <td class="px-4 py-3 text-slate-600 border-b border-slate-100">${l.distrito}</td>
+          <td class="px-4 py-3 text-slate-500 border-b border-slate-100">${l.edad}</td>
+          <td class="px-4 py-3 text-slate-600 border-b border-slate-100 truncate max-w-[150px]" title="${l.exam_name}">${l.exam_name}</td>
+          <td class="px-4 py-3 text-center font-black text-red-700 border-b border-slate-100">${l.score}</td>
+          <td class="px-4 py-3 text-[10px] text-slate-400 border-b border-slate-100">${dateStr}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function exportLeadsToCSV() {
+      if (!state.leads.length) {
+        showToast('No hay registros de estudiantes para exportar.', 'error');
+        return;
+      }
+
+      let csv = '\uFEFF'; 
+      csv += 'Nombre,WhatsApp,Email,Distrito,Edad,Interes Beca,Simulacro,Puntaje,Correctas,Incorrectas,Sin Responder,Fecha\n';
+
+      state.leads.forEach(l => {
+        const dateStr = new Date(l.timestamp).toLocaleString('es-PE', { timeZone: 'America/Lima' });
+        const name = `"${l.nombre.replace(/"/g, '""')}"`;
+        const whatsapp = `"${l.whatsapp.replace(/"/g, '""')}"`;
+        const email = `"${(l.email || '').replace(/"/g, '""')}"`;
+        const distrito = `"${l.distrito.replace(/"/g, '""')}"`;
+        const edad = `"${l.edad.replace(/"/g, '""')}"`;
+        const interes = `"${l.interes_beca.replace(/"/g, '""')}"`;
+        const exam = `"${l.exam_name.replace(/"/g, '""')}"`;
+        const score = `"${l.score.replace(/"/g, '""')}"`;
+        const correct = `"${(l.correct || '').replace(/"/g, '""')}"`;
+        const incorrect = `"${(l.incorrect || '').replace(/"/g, '""')}"`;
+        const unanswered = `"${(l.unanswered || '').replace(/"/g, '""')}"`;
+
+        csv += `${name},${whatsapp},${email},${distrito},${edad},${interes},${exam},${score},${correct},${incorrect},${unanswered},"${dateStr}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute('download', `leads_simulador_appu_${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('Archivo CSV exportado con éxito.', 'success');
+    }
+
+    function clearLeadsDatabase() {
+      document.getElementById('delete-modal-text').textContent = '¿Seguro que deseas eliminar todos los registros de estudiantes (leads) de forma permanente?';
+      document.getElementById('confirm-delete-btn').onclick = () => {
+        state.leads = [];
+        saveLeads();
+        updateLeadsExamSelect();
+        renderLeadsTable();
+        hideModal('delete-modal');
+        showToast('Base de datos de estudiantes vaciada.', 'error');
+      };
+      showModal('delete-modal');
+    }
+
+    function exportExams() {
+      if (!state.exams.length) {
+        showToast('No hay simulacros configurados para exportar.', 'error');
+        return;
+      }
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state.exams, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href",     dataStr);
+      downloadAnchor.setAttribute("download", `simulacros_beca18_appu_${Date.now()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast('Simulacros exportados con éxito.', 'success');
+    }
+
+    function importExams(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (!Array.isArray(imported)) {
+            throw new Error('El archivo debe contener un arreglo de exámenes.');
+          }
+
+          imported.forEach((ex, idx) => {
+            if (!ex.id || !ex.name || !Array.isArray(ex.questions)) {
+              throw new Error(`El simulacro en el índice ${idx} no tiene la estructura correcta.`);
+            }
+          });
+
+          document.getElementById('delete-modal-text').textContent = `¿Deseas fusionar (${imported.length}) simulacros importados con los existentes?`;
+          document.getElementById('confirm-delete-btn').onclick = () => {
+            state.exams = [...state.exams, ...imported];
+            saveData();
+            renderAdmin();
+            updateStats();
+            hideModal('delete-modal');
+            showToast('Simulacros importados con éxito.', 'success');
+          };
+          showModal('delete-modal');
+        } catch (err) {
+          showToast('Error al importar: ' + err.message, 'error');
+        }
+        input.value = '';
+      };
+      reader.readAsText(file);
+    }
+
+    function createExam() {
+      const name = document.getElementById('f-exam-name').value.trim();
+      if (!name) {
+        showToast('Ingresa un título para el simulacro.', 'error');
+        return;
+      }
+
+      state.exams.push({ id: 'exam_' + Date.now(), name, questions: [] });
+      saveData();
+      document.getElementById('f-exam-name').value = '';
+
+      renderExamList();
+      updateExamSelect();
+      showToast('Simulacro registrado exitosamente.', 'success');
+    }
+
+    function renderExamList() {
+      const container = document.getElementById('exam-list');
+      if (!state.exams.length) {
+        container.innerHTML = '<p class="text-sm text-slate-400 italic">No hay simulacros configurados.</p>';
+        return;
+      }
+
+      container.innerHTML = '';
+      state.exams.forEach(exam => {
+        const mat = exam.questions.filter(q => q.category === 'Competencia Matemática').length;
+        const lec = exam.questions.filter(q => q.category === 'Competencia Lectora').length;
+        const complete = exam.questions.length >= 60;
+
+        const div = document.createElement('div');
+        div.className = `flex items-center justify-between p-4 rounded-xl border ${complete ? 'border-emerald-200 bg-emerald-50/50' : 'border-slate-200 bg-slate-50'
+          } transition-all`;
+
+        div.innerHTML = `
+          <div class="flex-grow min-w-0 pr-4">
+            <p class="font-black text-slate-900 text-sm flex items-center gap-2">
+              <span>${exam.name}</span>
+              ${complete ? '<span class="bg-emerald-100 text-emerald-800 text-[9px] font-black px-2 py-0.5 rounded-full uppercase">Completo (60q)</span>' : '<span class="bg-amber-100 text-amber-800 text-[9px] font-black px-2 py-0.5 rounded-full uppercase">Parcial</span>'}
+            </p>
+            <p class="text-xs text-slate-500 mt-1 font-semibold">Matemática: ${mat}/30 | Lectora: ${lec}/30 | Total cargadas: ${exam.questions.length}/60</p>
+          </div>
+          <button type="button" onclick="deleteExam('${exam.id}')" class="p-2 text-slate-400 hover:text-red-600 rounded-xl hover:bg-red-50 shrink-0 transition-colors">
+            <i data-lucide="trash-2" class="w-5 h-5"></i>
+          </button>
+        `;
+        container.appendChild(div);
+      });
+      lucide.createIcons();
+    }
+
+    function deleteExam(id) {
+      document.getElementById('delete-modal-text').textContent = '¿Seguro que deseas eliminar este simulacro y todas sus preguntas?';
+      document.getElementById('confirm-delete-btn').onclick = () => {
+        state.exams = state.exams.filter(e => e.id !== id);
+        saveData();
+        renderExamList();
+        updateExamSelect();
+        renderAdminList();
+        hideModal('delete-modal');
+        showToast('Simulacro eliminado.', 'error');
+      };
+      showModal('delete-modal');
+    }
+
+    function updateExamSelect() {
+      const sel = document.getElementById('f-exam-assign');
+      sel.innerHTML = '';
+
+      state.exams.forEach(e => {
+        const mat = e.questions.filter(q => q.category === 'Competencia Matemática').length;
+        const lec = e.questions.filter(q => q.category === 'Competencia Lectora').length;
+        sel.innerHTML += `<option value="${e.id}">${e.name} (Mat: ${mat}/30, Lec: ${lec}/30)</option>`;
+      });
+
+      const filter = document.getElementById('admin-filter-exam');
+      filter.innerHTML = '<option value="all">Ver todas las preguntas</option>';
+      state.exams.forEach(e => {
+        filter.innerHTML += `<option value="${e.id}">${e.name}</option>`;
+      });
+    }
+
+    function renderKeyButtons() {
+      const container = document.getElementById('key-buttons');
+      container.innerHTML = '';
+
+      ['A', 'B', 'C', 'D', 'E'].forEach((l, i) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `flex-grow h-11 rounded-xl font-black text-xs border transition-all ${state.formCorrectAnswer === i
+            ? 'bg-emerald-600 text-white border-emerald-700 shadow'
+            : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+          }`;
+        btn.textContent = l;
+        btn.onclick = () => {
+          state.formCorrectAnswer = i;
+          renderKeyButtons();
+          updatePreview();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function renderOptionsInputs() {
+      const container = document.getElementById('options-inputs');
+      if (container.children.length === 5) return;
+
+      container.innerHTML = '';
+      ['A', 'B', 'C', 'D', 'E'].forEach((l, i) => {
+        const div = document.createElement('div');
+        div.className = 'p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2';
+        div.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-black text-slate-700 uppercase">Opción ${l}</span>
+          </div>
+          <input type="text" id="f-opt-${i}" placeholder="Escribe la alternativa ${l}" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-red-500 font-semibold" oninput="updatePreview()">
+          <div class="flex items-center gap-2">
+            <input type="text" id="f-opt-img-${i}" placeholder="URL Imagen" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-[10px] outline-none focus:ring-2 focus:ring-red-500 font-medium" oninput="updatePreview()">
+            <label class="px-2 py-1.5 bg-slate-200 hover:bg-slate-300 rounded-lg text-[10px] font-black cursor-pointer transition-all shrink-0">
+              <span>Subir</span>
+              <input type="file" accept="image/*" class="hidden" onchange="handleFileAsBase64(this, 'f-opt-img-${i}')">
+            </label>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function saveQuestion(e) {
+      e.preventDefault();
+      const examId = document.getElementById('f-exam-assign').value;
+      if (!examId) {
+        showToast('Debes crear un simulacro primero.', 'error');
+        return;
+      }
+
+      const exam = state.exams.find(ex => ex.id === examId);
+      if (!exam) return;
+
+      const category = document.getElementById('f-category').value;
+      const question = document.getElementById('f-question').value.trim();
+      if (!question) {
+        showToast('Escribe el enunciado.', 'error');
+        return;
+      }
+
+      const options = [0, 1, 2, 3, 4].map(i => document.getElementById('f-opt-' + i).value.trim());
+      const validOptions = options.slice(0, 5).filter(o => o);
+
+      if (validOptions.length < 4) {
+        showToast('Debes definir por lo menos 4 opciones válidas.', 'error');
+        return;
+      }
+
+      const catCount = exam.questions.filter(q => q.category === category).length;
+      if (!state.editingId && catCount >= 30) {
+        showToast(`Este simulacro ya alcanzó el límite de 30 preguntas de ${category}.`, 'error');
+        return;
+      }
+
+      const optionImages = [0, 1, 2, 3, 4].filter(i => options[i]).map(i => document.getElementById('f-opt-img-' + i).value.trim() || '');
+      const questionImg = document.getElementById('f-question-img').value.trim();
+
+      const data = {
+        id: state.editingId || 'q_' + Date.now(),
+        category,
+        question,
+        questionImg,
+        options: validOptions,
+        optionImages,
+        correctAnswer: Math.min(state.formCorrectAnswer, validOptions.length - 1),
+        solutionText: document.getElementById('f-solution').value,
+        solutionImg: document.getElementById('f-solution-img').value.trim()
+      };
+
+      if (state.editingId) {
+        if (state.editingExamId && state.editingExamId !== examId) {
+          const oldExam = state.exams.find(ex => ex.id === state.editingExamId);
+          if (oldExam) oldExam.questions = oldExam.questions.filter(q => q.id !== state.editingId);
+        }
+
+        exam.questions = exam.questions.map(q => q.id === state.editingId ? data : q);
+        if (!exam.questions.find(q => q.id === state.editingId)) {
+          exam.questions.push(data);
+        }
+        showToast('Pregunta actualizada correctamente.', 'success');
+      } else {
+        exam.questions.push(data);
+        showToast('Pregunta agregada con éxito.', 'success');
+      }
+
+      saveData();
+      resetAdminForm();
+      renderAdmin();
+    }
+
+    function insertMathChar(char) {
+      const textarea = document.getElementById('f-question');
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = textarea.value;
+
+      textarea.value = text.substring(0, start) + ` $${char}$ ` + text.substring(end);
+      textarea.selectionStart = textarea.selectionEnd = start + char.length + 4;
+      textarea.focus();
+      updatePreview();
+    }
+
+    function resetAdminForm() {
+      state.editingId = null;
+      state.editingExamId = null;
+      state.formCorrectAnswer = 0;
+
+      document.getElementById('f-question').value = '';
+      document.getElementById('f-question-img').value = '';
+      document.getElementById('f-question-file').value = '';
+      document.getElementById('f-solution').value = '';
+      document.getElementById('f-solution-img').value = '';
+      document.getElementById('f-solution-file').value = '';
+      document.getElementById('f-category').value = 'Competencia Matemática';
+
+      [0, 1, 2, 3, 4].forEach(i => {
+        const el = document.getElementById('f-opt-' + i);
+        if (el) el.value = '';
+        const elImg = document.getElementById('f-opt-img-' + i);
+        if (elImg) elImg.value = '';
+      });
+
+      document.getElementById('admin-form-title').textContent = '➕ Agregar Pregunta con LaTeX';
+      document.getElementById('btn-discard-edit').classList.add('hidden');
+
+      renderKeyButtons();
+      updatePreview();
+    }
+
+    function startEdit(examId, qId) {
+      const exam = state.exams.find(e => e.id === examId);
+      const q = exam?.questions.find(x => x.id === qId);
+      if (!q) return;
+
+      state.editingId = qId;
+      state.editingExamId = examId;
+      state.formCorrectAnswer = q.correctAnswer;
+
+      document.getElementById('f-exam-assign').value = examId;
+      document.getElementById('f-category').value = q.category;
+      document.getElementById('f-question').value = q.question;
+      document.getElementById('f-question-img').value = q.questionImg || '';
+      document.getElementById('f-solution').value = q.solutionText || '';
+      document.getElementById('f-solution-img').value = q.solutionImg || '';
+
+      q.options.forEach((o, i) => {
+        const el = document.getElementById('f-opt-' + i);
+        if (el) el.value = o;
+        const elImg = document.getElementById('f-opt-img-' + i);
+        if (elImg) elImg.value = (q.optionImages && q.optionImages[i]) || '';
+      });
+
+      for (let i = q.options.length; i < 5; i++) {
+        const el = document.getElementById('f-opt-' + i);
+        if (el) el.value = '';
+        const elImg = document.getElementById('f-opt-img-' + i);
+        if (elImg) elImg.value = '';
+      }
+
+      document.getElementById('admin-form-title').textContent = '✏️ Modificar Pregunta Existente';
+      document.getElementById('btn-discard-edit').classList.remove('hidden');
+
+      renderKeyButtons();
+      updatePreview();
+      window.scrollTo({ top: 350, behavior: 'smooth' });
+    }
+
+    function deleteQuestion(examId, qId) {
+      document.getElementById('delete-modal-text').textContent = '¿Seguro que deseas eliminar de forma permanente esta pregunta del simulacro?';
+      document.getElementById('confirm-delete-btn').onclick = () => {
+        const exam = state.exams.find(e => e.id === examId);
+        if (exam) {
+          exam.questions = exam.questions.filter(q => q.id !== qId);
+        }
+        saveData();
+        renderAdmin();
+        hideModal('delete-modal');
+        showToast('Pregunta eliminada de la base de datos.', 'error');
+      };
+      showModal('delete-modal');
+    }
+
+    function renderAdminList() {
+      const filterVal = document.getElementById('admin-filter-exam').value;
+      const container = document.getElementById('admin-list');
+      let listQ = [];
+
+      if (filterVal === 'all') {
+        state.exams.forEach(e => {
+          e.questions.forEach(q => listQ.push({ ...q, examId: e.id, examName: e.name }));
+        });
+      } else {
+        const exam = state.exams.find(e => e.id === filterVal);
+        if (exam) {
+          exam.questions.forEach(q => listQ.push({ ...q, examId: exam.id, examName: exam.name }));
+        }
+      }
+
+      if (!listQ.length) {
+        container.innerHTML = '<p class="text-center py-8 text-slate-400 text-sm italic">No hay preguntas asociadas en este filtro.</p>';
+        return;
+      }
+
+      container.innerHTML = '';
+      listQ.forEach((q, i) => {
+        const div = document.createElement('div');
+        div.className = 'flex items-center gap-3 p-3 rounded-xl border border-slate-150 hover:bg-slate-50 transition-all';
+        div.innerHTML = `
+          <span class="text-xs font-black bg-slate-100 text-slate-800 px-2.5 py-1 rounded-lg">${i + 1}</span>
+          <div class="flex-grow min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <p class="text-[10px] font-black text-red-700 uppercase tracking-wider">${q.category}</p>
+              <span class="text-[9px] text-indigo-700 font-extrabold bg-indigo-50 px-2 py-0.5 rounded">${q.examName}</span>
+            </div>
+            <p class="text-xs font-bold text-slate-800 truncate mt-0.5 select-text">${q.question}</p>
+          </div>
+          <span class="text-[10px] font-black bg-slate-100 px-2 py-1 rounded shrink-0">Clave ${String.fromCharCode(65 + q.correctAnswer)}</span>
+          <button type="button" onclick="startEdit('${q.examId}', '${q.id}')" class="p-2 text-slate-400 hover:text-indigo-900 rounded-lg hover:bg-slate-100 shrink-0">
+            <i data-lucide="edit-3" class="w-4 h-4"></i>
+          </button>
+          <button type="button" onclick="deleteQuestion('${q.examId}', '${q.id}')" class="p-2 text-slate-400 hover:text-red-600 rounded-lg hover:bg-slate-100 shrink-0">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        `;
+        container.appendChild(div);
+      });
+      lucide.createIcons();
+    }
+
+    function resetToDefaults() {
+      document.getElementById('delete-modal-text').textContent = '¿Seguro que deseas restablecer los exámenes originales? Se borrarán tus creaciones personalizadas.';
+      document.getElementById('confirm-delete-btn').onclick = () => {
+        state.exams = JSON.parse(JSON.stringify(INITIAL_EXAMS));
+        state.rankings = [...MOCK_RANKINGS];
+        saveData();
+        saveRankings();
+        renderAdmin();
+        hideModal('delete-modal');
+        showToast('Datos de fábrica restaurados con éxito.');
+      };
+      showModal('delete-modal');
+    }
+
+    // BASE64 FILE CONVERTER
+    function handleFileAsBase64(input, textInputId) {
+      const file = input.files[0];
+      if (!file) return;
+
+      // Warning for files larger than 400KB
+      if (file.size > 400000) {
+        showToast('Imagen muy pesada. Se recomienda usar imágenes optimizadas menores a 150KB.', 'error');
+      }
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        document.getElementById(textInputId).value = e.target.result;
+        updatePreview();
+        showToast('Imagen cargada con éxito en Base64', 'success');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearImageField(textInputId, fileInputId) {
+      document.getElementById(textInputId).value = '';
+      const fileInput = document.getElementById(fileInputId);
+      if (fileInput) fileInput.value = '';
+      updatePreview();
+      showToast('Imagen eliminada de la pregunta.', 'error');
+    }
+
+    // LIVE PREVIEW GENERATOR (ADMIN)
+    function updatePreview() {
+      const questionText = document.getElementById('f-question').value.trim() || 'Escribe el enunciado del problema...';
+      const category = document.getElementById('f-category').value;
+      const questionImg = document.getElementById('f-question-img').value.trim();
+
+      document.getElementById('prev-q-text').textContent = questionText;
+      document.getElementById('prev-category').textContent = category;
+
+      const qImg = document.getElementById('prev-q-img');
+      if (questionImg && (questionImg.startsWith('http') || questionImg.startsWith('data:image'))) {
+        qImg.src = questionImg;
+        qImg.onload = () => qImg.classList.remove('hidden');
+        qImg.onerror = () => qImg.classList.add('hidden');
+      } else {
+        qImg.classList.add('hidden');
+      }
+
+      const options = [0, 1, 2, 3, 4].map(i => {
+        return {
+          text: document.getElementById('f-opt-' + i).value.trim(),
+          img: document.getElementById('f-opt-img-' + i).value.trim(),
+          origIdx: i
+        };
+      });
+      const validOptions = options.filter(o => o.text);
+      const optContainer = document.getElementById('prev-q-options');
+
+      if (!validOptions.length) {
+        optContainer.innerHTML = '<p class="text-xs text-slate-400 italic">Las opciones válidas aparecerán aquí...</p>';
+        return;
+      }
+
+      optContainer.innerHTML = '';
+      validOptions.forEach((opt, i) => {
+        const isCorrect = state.formCorrectAnswer === i;
+        const btn = document.createElement('div');
+        btn.className = `p-3 rounded-xl border text-xs flex flex-col gap-2 ${isCorrect ? 'border-emerald-500 bg-emerald-50 text-emerald-950 font-bold' : 'border-slate-200 bg-white text-slate-700'
+          }`;
+
+        let imgHtml = '';
+        if (opt.img && (opt.img.startsWith('http') || opt.img.startsWith('data:image'))) {
+          imgHtml = `<img src="${opt.img}" class="max-w-xs rounded-lg border border-slate-200 shadow-sm object-contain mt-1" style="max-height: 120px;">`;
+        }
+
+        btn.innerHTML = `
+          <div class="flex items-center justify-between w-full">
+            <div class="flex items-center space-x-2">
+              <span class="w-6 h-6 rounded-full font-black text-[10px] border flex items-center justify-center shrink-0 ${isCorrect ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500'
+            }">${String.fromCharCode(65 + i)}</span>
+              <span>${opt.text}</span>
+            </div>
+            ${isCorrect ? '<span class="text-emerald-600 font-extrabold text-[10px]">Clave Correcta</span>' : ''}
+          </div>
+          ${imgHtml ? `<div class="pl-8">${imgHtml}</div>` : ''}
+        `;
+        optContainer.appendChild(btn);
+      });
+
+      setTimeout(renderMath, 20);
+    }
+
+    // LEAD CAPTURE SYSTEM
+    function showLeadForm() {
+      showModal('lead-form-modal');
+      document.getElementById('lead-form').reset();
+    }
+
+    async function submitLeadForm(e) {
+      e.preventDefault();
+      const submitBtn = document.getElementById('lead-submit-btn');
+
+      submitBtn.disabled = true;
+      const originalHtml = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<span>Procesando inscripción...</span>';
+
+      const formData = {
+        nombre: document.getElementById('lead-nombre').value.trim(),
+        whatsapp: document.getElementById('lead-whatsapp').value.trim(),
+        email: document.getElementById('lead-email').value.trim(),
+        distrito: document.getElementById('lead-distrito').value,
+        edad: document.getElementById('lead-edad').value,
+        interes_beca: document.getElementById('lead-interes').value,
+        exam_name: state.exams.find(ex => ex.id === state.simExamId)?.name || 'Simulacro APPU 2026',
+        score: document.getElementById('res-score').textContent,
+        correct: document.getElementById('res-correct').textContent,
+        incorrect: document.getElementById('res-incorrect').textContent,
+        unanswered: document.getElementById('res-unanswered').textContent,
+        timestamp: new Date().toISOString()
+      };
+
+      if (typeof window.dataSdk !== 'undefined' && window.dataSdk.create) {
+        try {
+          await window.dataSdk.create(formData);
+        } catch (err) {
+          console.log("No se pudo conectar al canal SDK remoto, guardando localmente.");
+        }
+      }
+
+      // Guardar localmente en el estado y localStorage
+      state.leads.push(formData);
+      saveLeads();
+
+      showToast('¡Registro Completado! Acceso total concedido.', 'success');
+
+      setTimeout(() => {
+        hideModal('lead-form-modal');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalHtml;
+
+        document.getElementById('btn-solutions').classList.remove('hidden');
+        toggleSolutions();
+      }, 1200);
+    }
+
+    // Auto-save active exam progress routines
+    function saveActiveSimulationProgress() {
+      if (!state.simulationActive) return;
+      const progress = {
+        selectedAnswers: state.selectedAnswers,
+        flaggedQuestions: state.flaggedQuestions,
+        timeLeft: state.timeLeft,
+        simExamId: state.simExamId,
+        userNickname: state.userNickname,
+        simStartTime: state.simStartTime,
+        currentIdx: state.currentIdx
+      };
+      localStorage.setItem('beca18_active_simulation_appu', JSON.stringify(progress));
+    }
+
+    function clearActiveSimulationProgress() {
+      localStorage.removeItem('beca18_active_simulation_appu');
+    }
+
+    function checkResumeSimulation() {
+      const saved = localStorage.getItem('beca18_active_simulation_appu');
+      if (saved) {
+        try {
+          const progress = JSON.parse(saved);
+          const exam = state.exams.find(e => e.id === progress.simExamId);
+          if (exam) {
+            document.getElementById('resume-nickname').textContent = progress.userNickname;
+            document.getElementById('resume-exam-name').textContent = exam.name;
+            
+            const m = Math.floor(progress.timeLeft / 60);
+            document.getElementById('resume-time-left').textContent = `${m} minutos`;
+            
+            showModal('resume-modal');
+            lucide.createIcons();
+          } else {
+            clearActiveSimulationProgress();
+          }
+        } catch (e) {
+          clearActiveSimulationProgress();
+        }
+      }
+    }
+
+    function resumeSavedSimulation() {
+      const saved = localStorage.getItem('beca18_active_simulation_appu');
+      if (!saved) return;
+      try {
+        const progress = JSON.parse(saved);
+        const exam = state.exams.find(e => e.id === progress.simExamId);
+        if (!exam) return;
+
+        state.userNickname = progress.userNickname;
+        state.simExamId = progress.simExamId;
+        state.simQuestions = [...exam.questions];
+        state.selectedAnswers = progress.selectedAnswers || {};
+        state.flaggedQuestions = progress.flaggedQuestions || {};
+        state.timeLeft = progress.timeLeft;
+        state.simStartTime = progress.simStartTime;
+        state.currentIdx = progress.currentIdx || 0;
+        state.simulationFinished = false;
+        state.simulationActive = true;
+
+        hideModal('resume-modal');
+        
+        document.getElementById('sim-user-display').textContent = state.userNickname;
+        document.getElementById('nav-tabs').classList.add('hidden');
+        document.getElementById('sim-timer').classList.remove('hidden');
+
+        document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.add('hidden'));
+        document.getElementById('tab-sim-active').classList.remove('hidden');
+
+        renderSimQuestion();
+        renderNavGrid();
+        startTimer();
+        
+        showToast('Examen reanudado con éxito.', 'success');
+      } catch (e) {
+        showToast('Error al reanudar el examen.', 'error');
+        clearActiveSimulationProgress();
+        hideModal('resume-modal');
+      }
+    }
+
+    function discardSavedSimulation() {
+      document.getElementById('delete-modal-text').textContent = '¿Seguro que deseas descartar el examen guardado? Perderás todo el progreso realizado.';
+      document.getElementById('confirm-delete-btn').onclick = () => {
+        clearActiveSimulationProgress();
+        hideModal('resume-modal');
+        hideModal('delete-modal');
+        showToast('Examen guardado descartado.', 'error');
+      };
+      showModal('delete-modal');
+    }
+
+    // Helper widgets JS functions (Calculator and Canvas drawing scratchpad)
+    let calcInput = '';
+    function pressCalc(val) {
+      const display = document.getElementById('calc-display');
+      if (!display) return;
+      if (val === 'C') {
+        calcInput = '';
+      } else if (val === 'DEL') {
+        calcInput = calcInput.slice(0, -1);
+      } else if (val === '=') {
+        try {
+          if (calcInput) {
+            const sanitized = calcInput.replace(/[^0-9+\-*/.]/g, '');
+            const result = Function('"use strict";return (' + sanitized + ')')();
+            calcInput = Number.isInteger(result) ? result.toString() : result.toFixed(3).replace(/\.?0+$/, '');
+          }
+        } catch (err) {
+          calcInput = 'Error';
+        }
+      } else {
+        if (calcInput === 'Error') calcInput = '';
+        calcInput += val;
+      }
+      display.value = calcInput || '0';
+    }
+
+    let canvas, ctx, drawing = false;
+    let strokeColor = '#0f172a';
+    let strokeWidth = 3;
+    let isEraser = false;
+
+    function initScratchpad() {
+      canvas = document.getElementById('scratchpad-canvas');
+      if (!canvas) return;
+      ctx = canvas.getContext('2d');
+
+      canvas.addEventListener('mousedown', startDrawing);
+      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mouseup', stopDrawing);
+      canvas.addEventListener('mouseout', stopDrawing);
+
+      canvas.addEventListener('touchstart', startTouchDrawing);
+      canvas.addEventListener('touchmove', touchDraw);
+      canvas.addEventListener('touchend', stopDrawing);
+    }
+
+    function startDrawing(e) {
+      drawing = true;
+      ctx.beginPath();
+      ctx.moveTo(e.offsetX, e.offsetY);
+    }
+
+    function draw(e) {
+      if (!drawing) return;
+      ctx.lineWidth = strokeWidth;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = isEraser ? '#f8fafc' : strokeColor; 
+      ctx.lineTo(e.offsetX, e.offsetY);
+      ctx.stroke();
+    }
+
+    function stopDrawing() {
+      drawing = false;
+    }
+
+    function startTouchDrawing(e) {
+      drawing = true;
+      const rect = canvas.getBoundingClientRect();
+      const touch = e.touches[0];
+      ctx.beginPath();
+      ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+      e.preventDefault();
+    }
+
+    function touchDraw(e) {
+      if (!drawing) return;
+      const rect = canvas.getBoundingClientRect();
+      const touch = e.touches[0];
+      ctx.lineWidth = strokeWidth;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = isEraser ? '#f8fafc' : strokeColor;
+      ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+      ctx.stroke();
+      e.preventDefault();
+    }
+
+    function setScratchColor(color, btn) {
+      isEraser = false;
+      strokeColor = color;
+      document.querySelectorAll('.color-btn').forEach(b => b.className = 'color-btn w-6 h-6 rounded-full');
+      if (btn) btn.className = 'color-btn w-6 h-6 rounded-full ring-2 ring-offset-2 ring-indigo-600';
+    }
+
+    function toggleEraser(btn) {
+      isEraser = !isEraser;
+      btn.classList.toggle('bg-red-100', isEraser);
+      btn.classList.toggle('text-red-700', isEraser);
+    }
+
+    function clearScratchpad() {
+      if (!ctx || !canvas) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function toggleWidget(id) {
+      const widget = document.getElementById(id);
+      if (!widget) return;
+      widget.classList.toggle('hidden');
+      if (id === 'scratchpad-widget' && !canvas) {
+        setTimeout(initScratchpad, 50);
+      }
+    }
+
+    function makeElementDraggable(elmnt) {
+      let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+      const header = document.getElementById(elmnt.id + "-header");
+      if (header) {
+        header.onmousedown = dragMouseDown;
+      } else {
+        elmnt.onmousedown = dragMouseDown;
+      }
+
+      function dragMouseDown(e) {
+        e = e || window.event;
+        if (e.target.closest('.close-widget-btn')) return;
+        e.preventDefault();
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+      }
+
+      function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+        elmnt.style.bottom = "auto";
+        elmnt.style.right = "auto";
+      }
+
+      function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+      }
+    }
+
+    // INTIALIZATION SCRIPT ON LOAD
+    document.addEventListener('DOMContentLoaded', () => {
+      updateStats();
+      lucide.createIcons();
+
+      document.getElementById('f-question').addEventListener('input', updatePreview);
+      document.getElementById('f-category').addEventListener('change', updatePreview);
+
+      setTimeout(renderMath, 100);
+      checkResumeSimulation();
+
+      // Setup Draggable Widgets
+      makeElementDraggable(document.getElementById('calculator-widget'));
+      makeElementDraggable(document.getElementById('scratchpad-widget'));
+    });
+  </script>
+</body>
+
+</html>
